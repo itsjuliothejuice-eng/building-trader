@@ -41,11 +41,32 @@ These are the real risks, ranked:
 | **Quality** | Well-structured prompts; 6 skills lacked front-matter (fixed) | Most disciplined process: look-ahead-bias checks, state tracking, metrics engine | Broad and good for quant fundamentals; much is crypto-specific | Deep but narrow; useless outside India |
 | **Trust risk** | Lowest | Medium (installer, live bots) | Medium (key-signing scripts) | Medium (live bots, unverified claims) |
 
-## Recommendation
+## Recommendation (updated: crypto on Coinbase)
 
-1. **Keep ai-trading-claude** for research on US tickers (`/trade analyze AAPL`). It's the lowest risk and can't touch money.
-2. **Keep cbt-framework** as the backtesting process. Its research → EDA → plan → build → iterate loop, with look-ahead-bias checks, is the right discipline: form a hypothesis, test it, measure it. It's the same way you'd run an in-field experiment. Stay in paper mode.
-3. **Use claude-trading-skills selectively**: backtrader, vectorbt, walk-forward-validation, position-sizing, kelly-criterion, risk-management, volatility-modeling, regime-detection, correlation-analysis, trade-journal, wash-sale-detection and tax-liability-tracking. Ignore the Solana/DEX/MEV skills unless you trade crypto on-chain, and never give them a wallet key.
-4. **Drop skill-algotrader** unless you trade Indian stocks through Zerodha. It targets NSE hours, instruments and broker only.
+The goal is trading crypto on Coinbase from the US, which changes the picture:
 
-If you want a leaner setup, I can delete the unused skills from `.claude/skills/`. The originals stay in `vendor/`.
+1. **cbt-framework is the main tool.** Its research → EDA → plan → build → iterate loop, with look-ahead-bias checks, is the right discipline: form a hypothesis, test it, measure it. It's the same way you'd run an in-field experiment. It had no Coinbase support, so I added one (see below). Binance.com and Bybit don't serve US customers, so ignore those templates.
+2. **Use the claude-trading-skills that fit centralized-exchange crypto**: vectorbt, backtrader, walk-forward-validation, ohlcv-processing, pandas-ta, regime-detection, volatility-modeling, mean-reversion, correlation-analysis, position-sizing, kelly-criterion, risk-management, exit-strategies, portfolio-analytics, trade-journal, coingecko-api, sentiment-analysis, and the tax skills (cost-basis-engine, crypto-tax-export, wash-sale-detection, tax-liability-tracking). Coinbase issues 1099s. Ignore the Solana/DEX/MEV/pump.fun skills. They're for on-chain trading, and some ask for a wallet private key.
+3. **ai-trading-claude is stocks only.** It's harmless to keep, but not useful for crypto.
+4. **Drop skill-algotrader.** It's Indian stocks through Zerodha only.
+
+## Coinbase support added
+
+- `.claude/cbt-framework/templates/live/coinbase_bot.py`: the Coinbase Advanced Trade client.
+  - **Spot only, long only.** It won't try to short.
+  - **Buys are sized in dollars and sells in coins.** The other exchange templates pass a dollar amount where a coin quantity is expected. On a spot exchange, "buy $100" would become "buy 100 BTC." That's a real bug, and this template avoids it.
+  - **Paper mode keeps a simulated wallet** and fills at live Coinbase prices, with slippage and fees. It needs no API keys.
+  - **Live mode has three locks:** the API keys, a `COINBASE_LIVE_CONFIRM` phrase in `.env`, and a per-order dollar cap.
+  - **Other protections:** the kill switch measures total account value, including coins held; tiny leftover coin balances ("dust") are ignored; and orders under the $1 minimum are skipped.
+- `.claude/cbt-framework/templates/presets/coinbase_spot.yaml`: fees for the lowest volume tier (0.60% maker, 1.20% taker), no leverage, and a $50 per-order cap.
+- `tools/fetch_coinbase_ohlcv.py`: downloads free Coinbase price history for backtests into `Data/`.
+- Also fixed: `base_bot.py` crashed on start if the `logs/` folder didn't exist.
+
+**Tested against live Coinbase prices (2026-09-28):**
+- A $100 paper buy filled at the market price plus slippage, with the fee charged.
+- Shorts were blocked, over-cash orders were capped, and sub-$1 orders were skipped.
+- Live mode refused to start without the confirmation phrase.
+- The downloader saved 1,002 daily BTC candles.
+- A full buy-then-sell round trip on $1,000 lost about **2.5% to fees and slippage**. At Coinbase's lowest fee tier, a strategy has to make more than about 2.5% per trade just to break even. That favors fewer, longer-held trades (daily or 4-hour charts) over rapid trading, and resting limit orders (0.60%) over market orders (1.20%).
+
+**When you create a Coinbase API key:** grant **View + Trade** only. **Never grant Transfer**, so a stolen key can't withdraw your funds. Add an IP allowlist too.

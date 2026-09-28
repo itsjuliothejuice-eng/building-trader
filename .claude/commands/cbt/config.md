@@ -76,6 +76,18 @@ If `show`:
 
 Available presets:
 
+### coinbase_spot
+```yaml
+fees:
+  maker: 0.60   # lowest volume tier; check the user's real tier
+  taker: 1.20
+leverage:
+  enabled: false
+live:
+  exchange: coinbase
+  max_position_size: 50
+```
+
 ### binance_futures
 ```yaml
 fees:

@@ -88,7 +88,7 @@ notifications:
 
 # Live trading configuration (populated by /cbt:live)
 live:
-  exchange: null       # bybit | kraken | binance | hyperliquid
+  exchange: null       # coinbase | bybit | kraken | binance | hyperliquid
   mode: paper          # paper | live
   api_key: null        # Set in .env as EXCHANGE_API_KEY
   api_secret: null     # Set in .env as EXCHANGE_API_SECRET

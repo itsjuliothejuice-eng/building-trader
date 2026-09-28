@@ -59,6 +59,7 @@ Before ANY deployment:
 
 ### Step 1: Select Exchange
 Ask user:
+- **Coinbase** - US-regulated spot exchange; the user's exchange (default choice). Spot, long only, no leverage. Template `coinbase_bot.py` takes BUY sizes in dollars and SELL sizes in coins, keeps a simulated paper wallet (no keys needed for paper), and refuses live mode unless `COINBASE_LIVE_CONFIRM` is set and `live.max_position_size` is configured. Use `.env` keys `COINBASE_API_KEY` / `COINBASE_API_SECRET` instead of `EXCHANGE_API_*`, created with View + Trade permission only (never Transfer).
 - **Bybit** - Derivatives + spot, good API, popular for crypto
 - **Kraken** - Established, good security, spot + futures
 - **Binance** - Largest volume, most pairs

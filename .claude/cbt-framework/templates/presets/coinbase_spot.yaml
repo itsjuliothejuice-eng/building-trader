@@ -1,0 +1,24 @@
+# Coinbase Advanced Trade spot preset (US-friendly)
+# Fees are the lowest-volume tier (under $1K/30 days traded). They fall as
+# volume rises. Check your real tier at coinbase.com/advanced-trade/fees and
+# update these, because at this tier fees dominate short-term strategies.
+
+fees:
+  maker: 0.60   # %
+  taker: 1.20   # %
+  slippage: 0.05
+
+leverage:
+  enabled: false   # spot account: no leverage
+  default: 1
+  max: 1
+
+execution:
+  entry_type: market
+  exit_type: market
+
+live:
+  exchange: coinbase
+  max_position_size: 50   # hard cap in USD per order; raise deliberately
+  kill_switch: true
+  kill_switch_drawdown: 10.0

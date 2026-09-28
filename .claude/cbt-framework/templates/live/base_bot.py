@@ -17,6 +17,7 @@ from dotenv import load_dotenv
 import yaml
 
 load_dotenv()
+Path('logs').mkdir(exist_ok=True)
 
 logging.basicConfig(
     level=logging.INFO,
