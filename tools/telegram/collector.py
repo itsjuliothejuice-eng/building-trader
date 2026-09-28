@@ -40,6 +40,7 @@ from telethon.utils import get_peer_id
 import store
 
 HERE = Path(__file__).resolve().parent
+CATCH_UP_SECONDS = 15 * 60
 ROOT = HERE.parents[1]
 load_dotenv(ROOT / '.env')
 logging.basicConfig(level=logging.INFO, format='%(asctime)s %(message)s')
@@ -78,7 +79,7 @@ def row_from(msg, chat, backfilled: bool) -> dict:
     )
 
 
-async def backfill(client, con, chat, days: int):
+async def backfill(client, con, chat, days: int, quiet: bool = False):
     since = datetime.now(timezone.utc) - timedelta(days=days)
     min_id = store.last_msg_id(con, get_peer_id(chat))
     n = 0
@@ -87,7 +88,8 @@ async def backfill(client, con, chat, days: int):
             break
         if store.save_new(con, **row_from(msg, chat, backfilled=True)):
             n += 1
-    log.info(f'backfilled {n:5} messages  {getattr(chat, "title", chat.id)}')
+    if n or not quiet:
+        log.info(f'backfilled {n:5} messages  {getattr(chat, "title", chat.id)}')
 
 
 async def main(days: int, no_live: bool):
@@ -132,6 +134,18 @@ async def main(days: int, no_live: bool):
             for mid in ev.deleted_ids:
                 store.save_deletion(con, chat_id=ev.chat_id, msg_id=mid)
 
+    async def catch_up_loop():
+        # Live events can be missed while the laptop sleeps or the network drops.
+        # Every 15 minutes, re-fetch anything newer than what we have.
+        while True:
+            await asyncio.sleep(CATCH_UP_SECONDS)
+            for chat in list(chats.values()):
+                try:
+                    await backfill(client, con, chat, cfg.get('backfill_days', days), quiet=True)
+                except Exception as err:
+                    log.warning(f'catch-up failed for {getattr(chat, "title", chat.id)}: {err}')
+
+    asyncio.get_running_loop().create_task(catch_up_loop())
     log.info('live: listening for new messages, edits and deletions (Ctrl+C to stop)')
     await client.run_until_disconnected()
 
