@@ -1,0 +1,9 @@
+# Copy to channels.yaml (git-ignored) and edit.
+# include: all              -> every group/channel you've joined
+# include: [list]           -> only these (username, t.me link, or exact title)
+include: all
+
+exclude:                    # skip non-trading chats (family, work, etc.)
+  - "Family"
+
+backfill_days: 90           # history to pull on the first run

@@ -9,3 +9,7 @@ data/
 Data/
 logs/
 experiments/
+*.session
+*.session-journal
+reports/
+tools/telegram/channels.yaml
