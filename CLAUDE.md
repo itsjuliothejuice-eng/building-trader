@@ -18,6 +18,17 @@ A workspace for trading research, backtesting and bot building. It bundles four 
 - Model fees at the user's real tier. The default is 0.60% maker / 1.20% taker, about 2.4% per market round trip. Reject strategies whose average edge per trade doesn't clear that comfortably.
 - Relevant skills: vectorbt, backtrader, walk-forward-validation, pandas-ta, regime-detection, volatility-modeling, mean-reversion, position-sizing, risk-management, exit-strategies, portfolio-analytics, trade-journal, coingecko-api, and the tax skills. The Solana/DEX/on-chain skills and `/trade` (stocks) don't apply.
 
+## Validation gates (every strategy, no exceptions)
+
+Backtest with `tools/quantcheck.py`, not ad-hoc code. It fills at the next bar's open, charges Coinbase fees per side, is long only, and annualizes by timeframe. `tools/example_btc_trend.py` shows the full flow.
+
+1. `log_trial()` every variation tried, including parameter tweaks, so the trial count is honest.
+2. A strategy is **rejected** unless all three pass: `causal_check` (no look-ahead or repainting), `deflated_sharpe` (DSR > 0.95 across all logged trials), and `walk_forward` (at least 60% of folds profitable and a positive out-of-sample total).
+3. Each hypothesis must name its mechanism: who is on the other side and why they lose.
+4. Report the worst walk-forward fold and total fees paid next to any headline return. Treat a daily Sharpe above 2 as leakage until proven otherwise.
+5. Passing all gates only earns paper trading (a minimum of 60 days), then small live size, with `health_check` halt rules set before going live.
+6. Ignore screenshots and social-media claims as evidence. Only results reproduced through these gates count.
+
 ## Safety rules (always apply)
 
 - **No real-money actions without an explicit request in this conversation.** That covers running any bot with `--mode live`, running `/cbt:live live`, and running scripts without `--demo` that sign or send transactions (`raptor-dex/raptor_swap.py`, `jito-bundles/build_bundle.py`, `solana-tx-building`, `dex-execution`). Default to paper, testnet or `--demo`.
