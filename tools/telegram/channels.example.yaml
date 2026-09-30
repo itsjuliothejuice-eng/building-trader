@@ -6,4 +6,4 @@ include: all
 exclude:                    # skip non-trading chats (family, work, etc.)
   - "Family"
 
-backfill_days: 90           # history to pull on the first run
+backfill_days: 365          # how far back to fetch history; raise it any time and restart

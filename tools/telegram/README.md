@@ -20,7 +20,7 @@ collector.py  ->  data/telegram/telegram.db  ->  score.py  ->  reports/telegram/
    Never paste these into chat or commit them.
 3. `copy tools\telegram\channels.example.yaml tools\telegram\channels.yaml` and add non-trading chats to `exclude`.
 4. `python tools/telegram/collector.py` and enter your phone number and the code Telegram sends.
-   It backfills 90 days, then keeps listening. Leave the window open.
+   It fetches a year of history (`backfill_days` in channels.yaml), then keeps listening. Leave the window open.
 
 To run it automatically: double-click `tools\telegram\run_collector.bat`, or add it to
 Task Scheduler with the trigger **At log on**.

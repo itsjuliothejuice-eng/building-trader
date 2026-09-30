@@ -79,15 +79,21 @@ def row_from(msg, chat, backfilled: bool) -> dict:
     )
 
 
-async def backfill(client, con, chat, days: int, quiet: bool = False):
+async def backfill(client, con, chat, days: int, quiet: bool = False, older: bool = False):
+    """Fetch messages newer than what we have; with older=True also reach back to `days` ago."""
     since = datetime.now(timezone.utc) - timedelta(days=days)
-    min_id = store.last_msg_id(con, get_peer_id(chat))
+    chat_id = get_peer_id(chat)
     n = 0
-    async for msg in client.iter_messages(chat, min_id=min_id):
+    async for msg in client.iter_messages(chat, min_id=store.last_msg_id(con, chat_id)):
         if msg.date < since:
             break
-        if store.save_new(con, **row_from(msg, chat, backfilled=True)):
-            n += 1
+        n += store.save_new(con, **row_from(msg, chat, backfilled=True))
+    oldest = store.first_msg_id(con, chat_id)
+    if older and oldest > 1:
+        async for msg in client.iter_messages(chat, offset_id=oldest):   # walks backwards from our oldest
+            if msg.date < since:
+                break
+            n += store.save_new(con, **row_from(msg, chat, backfilled=True))
     if n or not quiet:
         log.info(f'backfilled {n:5} messages  {getattr(chat, "title", chat.id)}')
 
@@ -109,8 +115,10 @@ async def main(days: int, no_live: bool):
             chats[get_peer_id(d.entity)] = d.entity  # marked id, same as event.chat_id
     log.info(f'watching {len(chats)} chats')
 
+    days = days or cfg.get('backfill_days', 90)
+    log.info(f'history: going back {days} days')
     for chat in chats.values():
-        await backfill(client, con, chat, cfg.get('backfill_days', days))
+        await backfill(client, con, chat, days, older=True)
 
     if no_live:
         return
@@ -141,7 +149,7 @@ async def main(days: int, no_live: bool):
             await asyncio.sleep(CATCH_UP_SECONDS)
             for chat in list(chats.values()):
                 try:
-                    await backfill(client, con, chat, cfg.get('backfill_days', days), quiet=True)
+                    await backfill(client, con, chat, days, quiet=True)
                 except Exception as err:
                     log.warning(f'catch-up failed for {getattr(chat, "title", chat.id)}: {err}')
 
@@ -152,7 +160,7 @@ async def main(days: int, no_live: bool):
 
 if __name__ == '__main__':
     ap = argparse.ArgumentParser()
-    ap.add_argument('--days', type=int, default=90, help='history to backfill on first run')
+    ap.add_argument('--days', type=int, help='days of history to fetch (overrides backfill_days in channels.yaml)')
     ap.add_argument('--no-live', action='store_true', help='backfill/catch up, then exit')
     a = ap.parse_args()
     asyncio.run(main(a.days, a.no_live))

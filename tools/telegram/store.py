@@ -89,6 +89,11 @@ def save_deletion(con, *, chat_id, msg_id):
     con.commit()
 
 
+def first_msg_id(con, chat_id) -> int:
+    row = con.execute('SELECT MIN(msg_id) m FROM messages WHERE chat_id=?', (chat_id,)).fetchone()
+    return row['m'] or 0
+
+
 def last_msg_id(con, chat_id) -> int:
     row = con.execute('SELECT MAX(msg_id) m FROM messages WHERE chat_id=?', (chat_id,)).fetchone()
     return row['m'] or 0
