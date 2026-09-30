@@ -69,3 +69,71 @@ Code: `tools/study_trend.py`. Data: Coinbase daily, BTC and ETH since 2016, SOL 
 
 **Next (Study 2, to be pre-registered):** the same long-only + vol-control rules on a combined BTC+ETH
 portfolio, which is a single new trial. If it passes, build the paper-trading bot for it.
+
+---
+
+## Study 2: BTC + ETH trend portfolio, 2026-09-30
+
+**Pre-registered before running.**
+
+**Hypothesis:** the same trend mechanism as Study 1. Running it on two coins that don't crash
+at exactly the same moments should make results steadier than either coin alone.
+
+**Rules:** exactly Study 1's long-only + vol-control rules, unchanged, on each coin.
+The account is split into two halves (50% BTC, 50% ETH), each trading its own coin on CDE perps
+at Intro fees. There's no rebalancing between halves (no hidden fees), and the two halves together
+never exceed 1x the account.
+
+**Trials:** 1 new, 13 in total including Study 1's 12. The deflated Sharpe counts all 13.
+
+**Period:** dates where both coins have data.
+
+**Pass criteria (decided now):**
+1. All three gates in `CLAUDE.md`: causal, DSR > 0.95 over 13 trials, ≥60% of 180-day walk-forward folds profitable with a positive total.
+2. Beats a 50/50 buy-and-hold of the same two coins on **both** Sharpe and max drawdown.
+
+If it passes, next is a paper-trading bot. If it fails, it's recorded here and not tweaked.
+
+### Study 2 results
+
+**Status: PASSED all gates. Approved for paper trading only.**
+
+First run (reported for honesty): REJECTED, but because of two bookkeeping bugs, not the rules.
+(1) Study 1 had been logged twice when it was re-run to print its table, so the trial count read 25
+instead of 13. (2) The BTC and ETH files each skip 2 days in May 2016 on different dates, so on those
+days one half-account went missing and a phantom −50% drawdown appeared while the strategy was flat.
+Fixes: one trial per distinct variant, and trade only on days both coins have a candle. The strategy
+rules were not changed.
+
+Data: 2016-05-18 to 2026-09-28, 3,784 days, CDE perp fees at Intro tier, 1 bp/day funding.
+
+| | Sharpe | CAGR | Max drawdown |
+|---|---|---|---|
+| 50/50 buy & hold (spot) | 0.66 | 66% | **−90%** |
+| **50/50 trend portfolio** | **1.27** | 43% | **−29%** |
+
+| Gate | Result |
+|---|---|
+| Causal | PASS: both legs unchanged on truncated history |
+| Deflated Sharpe | PASS: 0.983 after 13 trials |
+| Walk-forward | PASS, **barely**: 11/18 six-month folds profitable (61%, needs 60%); worst fold −21% |
+| Benchmark | PASS: Sharpe 1.27 vs 0.66, drawdown −29% vs −90% |
+
+| Year | 2017 | 2018 | 2019 | 2020 | 2021 | 2022 | 2023 | 2024 | 2025 | 2026 YTD |
+|---|---|---|---|---|---|---|---|---|---|---|
+| Trend portfolio | +554% | **−21%** | +31% | +104% | +80% | **−15%** | +35% | +33% | +3% | +6% |
+| 50/50 hold | +3047% | **−79%** | +41% | +370% | +218% | **−67%** | +109% | +72% | −9% | −7% |
+| Trend worst dip that year | −23% | −29% | −23% | −20% | −21% | −17% | −22% | −29% | −20% | −11% |
+
+**Open issues before paper trading:**
+1. **Drawdown vs the kill switch.** The backtest's worst drawdown (−29%) is deeper than the −20% account
+   kill switch in the ground rules. At full size the kill switch would have fired in 2018 and 2024.
+   Either set the kill switch from the system's own history (e.g. 1.5× the backtest worst, as
+   `health_check` does), or run at reduced size (e.g. 2/3 size → roughly −20% worst). The user decides this.
+2. **Contract sizes.** One BTC PERP is about $840 and one ETH PERP about $270. The rules call for fractional positions
+   (e.g. 0.6 × half the account). A small account can't hold those precisely on perps, and spot fees
+   are about 6× higher. Next: simulate whole-contract rounding at realistic account sizes to find the
+   minimum account where perp rounding doesn't change the results.
+3. **Six-month losing stretches are normal:** 7 of 18 folds lost money, some by −15% to −21%.
+   Paper trading must be judged against that, not against the good years.
+4. **2017 dominates the headline CAGR.** Since 2023 it has made +35%, +33%, +3%, +6%.
