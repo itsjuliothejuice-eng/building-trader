@@ -77,6 +77,17 @@ class Prices:
         self.cache[sym] = hit
         return hit
 
+    def perp(self, sym) -> bool:
+        """True if Coinbase Derivatives (CDE) lists a PERP for this coin (long or short)."""
+        cb = self._exchange('coinbase')
+        if not cb:
+            return False
+        if not hasattr(self, '_perps'):
+            self._perps = {m['base'] for m in cb.markets.values()
+                           if m.get('type') == 'future' and m.get('active') is not False
+                           and 'PERP' in str((m.get('info') or {}).get('future_product_details', {}).get('contract_display_name', ''))}
+        return sym.removeprefix('1000') in self._perps
+
     def candles(self, exchange, market, start, end):
         """Hourly [ts, open, high, low, close] between start and end (ms), cached in SQLite."""
         q = 'SELECT ts, open, high, low, close FROM candles WHERE exchange=? AND symbol=? AND ts>=? AND ts<? ORDER BY ts'
@@ -119,7 +130,10 @@ def score_call(c, px, now_ms):
     if ref and not band[0] < entry / ref < band[1]:
         # Levels nowhere near the real price: a different coin with the same ticker, or a typo.
         return {'status': 'price_mismatch', 'exchange': exchange, 'on_coinbase': on_cb, 'entry_price': entry}
-    out = {'status': 'scored', 'exchange': exchange, 'on_coinbase': on_cb, 'entry_price': entry}
+    perp = px.perp(c['symbol'])
+    out = {'status': 'scored', 'exchange': exchange, 'on_coinbase': on_cb, 'coinbase_perp': perp,
+           # spot can only buy; a short needs a CDE perp
+           'tradeable': int(perp or (on_cb and sign > 0)), 'entry_price': entry}
 
     for label, h in HORIZONS.items():
         if len(after) >= h:
@@ -198,6 +212,7 @@ def main(days=None):
         s = {
             'channel': title, 'calls': len(mine), 'scored': len(scored),
             'on_coinbase_pct': round(100 * sum(c['on_coinbase'] for c in scored) / len(scored)) if scored else 0,
+            'tradeable_pct': round(100 * sum(c.get('tradeable', 0) for c in scored) / len(scored)) if scored else 0,
             'win_7d_pct': round(100 * sum(x > 0 for x in n7) / len(n7)) if n7 else None,
             'median_net_24h': round(st.median(n24), 2) if n24 else None,
             'mean_net_7d': round(st.mean(n7), 2) if n7 else None,
@@ -219,7 +234,7 @@ def main(days=None):
 def write_reports(calls, cards):
     REPORTS.mkdir(parents=True, exist_ok=True)
     cols = ['chat_title', 'posted_utc', 'symbol', 'direction', 'leverage', 'entry_low', 'entry_high', 'targets',
-            'stop', 'status', 'exchange', 'on_coinbase', 'entry_price', 'entry_gone', 'runup_24h_before',
+            'stop', 'status', 'exchange', 'on_coinbase', 'coinbase_perp', 'tradeable', 'entry_price', 'entry_gone', 'runup_24h_before',
             'net_1h', 'net_24h', 'net_7d', 'outcome', 'targets_hit', 'edited_levels', 'backfilled', 'msg_id']
     with (REPORTS / 'calls.csv').open('w', newline='', encoding='utf-8') as f:
         w = csv.DictWriter(f, cols, extrasaction='ignore')
@@ -237,17 +252,18 @@ def write_reports(calls, cards):
         'Returns are % per call, unleveraged, entered at the first hourly open after the post, '
         'minus a 2.5% Coinbase round trip. Leverage multiplies losses the same as gains.', '',
         '| Channel | Verdict | Calls | Scored | 7d win % | Mean 7d net | Worst 7d | Median 24h | '
-        'Target before stop % | Pumped before call % | Entry already gone % | On Coinbase % | '
+        'Target before stop % | Pumped before call % | Entry already gone % | Tradeable on your Coinbase % | '
         'Results with no prior call | Edited levels | Deleted |',
         '|' + '---|' * 15,
     ]
     for s in cards:
         lines.append('| ' + ' | '.join(str(fmt(s[k])) for k in [
             'channel', 'verdict', 'calls', 'scored', 'win_7d_pct', 'mean_net_7d', 'worst_7d', 'median_net_24h',
-            'target_before_stop_pct', 'pumped_pct', 'entry_gone_pct', 'on_coinbase_pct',
+            'target_before_stop_pct', 'pumped_pct', 'entry_gone_pct', 'tradeable_pct',
             'unbacked_results', 'edited_levels', 'deleted_msgs']) + ' |')
     lines += ['', '**How to read it**',
               '- *Verdict* needs 20+ scored calls. "WORTH TESTING" only means it goes through tools/quantcheck.py next.',
+              '- *Tradeable on your Coinbase*: longs on coins with Coinbase spot or a CDE perp; shorts only with a CDE perp.',
               '- *Pumped before call*: share of calls where the coin already rose >15% in the 24h before the post.',
               '- *Results with no prior call*: victory posts for coins the channel never called beforehand.',
               '- *Edited levels / Deleted*: only caught for messages seen live; history-only calls may hide earlier edits.']

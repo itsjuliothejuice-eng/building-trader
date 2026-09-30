@@ -11,16 +11,28 @@ A workspace for trading research, backtesting and bot building. It bundles four 
 | `.claude/skills/<68 others>` | claude-trading-skills | Quant building blocks (backtrader, vectorbt, walk-forward, Kelly, position sizing, volatility, regime detection, tax/wash-sale) plus many crypto, Solana and DeFi skills |
 | `.claude/skills/algotrader` | skill-algotrader | Indian equities (NSE / Zerodha Kite) playbook and CLI |
 
-## The user's setup: crypto on Coinbase (US, Texas)
+## The user's setup: Coinbase (US, Texas)
 
-- Exchange: **Coinbase Advanced Trade**, spot only, no leverage or shorting. For `/cbt:live`, use `templates/live/coinbase_bot.py` and the `coinbase_spot` preset. Don't suggest Binance.com or Bybit; they don't serve US residents.
-- Backtest data: `python tools/fetch_coinbase_ohlcv.py BTC/USD 1h --start 2023-01-01`. It writes `Data/BTC_USD_1h.csv` and needs no key.
-- Model fees at the user's real tier. The default is 0.60% maker / 1.20% taker, about 2.4% per market round trip. Reject strategies whose average edge per trade doesn't clear that comfortably.
-- Relevant skills: vectorbt, backtrader, walk-forward-validation, pandas-ta, regime-detection, volatility-modeling, mean-reversion, position-sizing, risk-management, exit-strategies, portfolio-analytics, trade-journal, coingecko-api, and the tax skills. The Solana/DEX/on-chain skills and `/trade` (stocks) don't apply.
+What the account can trade (confirmed from the user's app, 2026-09-30):
+
+| Market | What | Short? | Leverage |
+|---|---|---|---|
+| Spot crypto (CBE) | ~400 coins vs USD/USDC | No | No |
+| CDE perps | 24 coins: AAVE ADA AVAX BCH BNB BTC DOGE DOT ENA ETH HBAR HYPE LINK LTC NEAR ONDO PAXG 1000PEPE 1000SHIB SOL SUI XLM XRP ZEC; index perps US 500, TECH, AI, DFNSE, CHINA | Yes | Up to 2x–20x by product |
+| CDE monthly futures | Most of the perp coins, plus GLD, SLVR, PLAT, COPR, OIL, NGS, MAG7C | Yes | By product |
+| Stocks and ETFs | US stocks and ETFs, including leveraged ETFs | No | No |
+| **Not available** | Stock perps, most FX pairs (view only), Binance.com, Bybit | | |
+
+- CDE contracts have fixed sizes, so the smallest position can be large (1 BTC PERP ≈ 0.01 BTC ≈ $840, 1 ZEC PERP ≈ $1,440, 1 SOL PERP ≈ $600). Check the contract value against account size before proposing any perp trade. If one contract is more than ~25% of the account, say so.
+- Perps charge **hourly funding**. Model it (`Config.coinbase_perp(funding_bps_per_day=...)`).
+- Fees: spot is 0.60% maker / 1.20% taker at the lowest tier (~2.4% round trip). CDE futures fees are separate and much lower; ask the user for the rate from Coinbase > Derivatives rather than guessing. `Config.coinbase_perp` requires `fee_bps` for this reason.
+- Live bot: `templates/live/coinbase_bot.py` is **spot only**. There is no perp bot yet.
+- Backtest data: `python tools/fetch_coinbase_ohlcv.py BTC/USD 1h --start 2023-01-01` (spot, no key). Perp history only starts mid-2025, so backtest on spot history and add perp fees and funding.
+- Relevant skills: vectorbt, backtrader, walk-forward-validation, pandas-ta, regime-detection, volatility-modeling, mean-reversion, cointegration-analysis, position-sizing, kelly-criterion, risk-management, exit-strategies, portfolio-analytics, trade-journal, coingecko-api, the tax skills, and `/trade` for stocks and ETFs. The Solana/DEX/on-chain skills don't apply.
 
 ## Validation gates (every strategy, no exceptions)
 
-Backtest with `tools/quantcheck.py`, not ad-hoc code. It fills at the next bar's open, charges Coinbase fees per side, is long only, and annualizes by timeframe. `tools/example_btc_trend.py` shows the full flow.
+Backtest with `tools/quantcheck.py`, not ad-hoc code. It fills at the next bar's open, charges fees per side, is long only for spot (`Config.coinbase_spot`) and allows shorts, leverage and funding for CDE (`Config.coinbase_perp`), catches intrabar liquidations, and annualizes by timeframe. `tools/example_btc_trend.py` shows the full flow.
 
 1. `log_trial()` every variation tried, including parameter tweaks, so the trial count is honest.
 2. A strategy is **rejected** unless all three pass: `causal_check` (no look-ahead or repainting), `deflated_sharpe` (DSR > 0.95 across all logged trials), and `walk_forward` (at least 60% of folds profitable and a positive out-of-sample total).
@@ -41,6 +53,7 @@ Backtest with `tools/quantcheck.py`, not ad-hoc code. It fills at the next bar's
 
 - **No real-money actions without an explicit request in this conversation.** That covers running any bot with `--mode live`, running `/cbt:live live`, and running scripts without `--demo` that sign or send transactions (`raptor-dex/raptor_swap.py`, `jito-bundles/build_bundle.py`, `solana-tx-building`, `dex-execution`). Default to paper, testnet or `--demo`.
 - **Never use cbt "YOLO" mode.** It skips confirmations.
+- **Leverage: default 1x (no leverage) and never above 2x effective** unless the user explicitly asks in this conversation. Every leveraged or short idea must state the price move that would liquidate it, and must use a stop. Backtests must include high/low data so `quantcheck` can catch liquidations.
 - **Coinbase API keys: View + Trade permission only, never Transfer.** Live mode also needs `COINBASE_LIVE_CONFIRM` in `.env` and a `live.max_position_size` cap; never set these on the user's behalf.
 - **Never put API keys, access tokens or wallet private keys in tracked files.** Put them in a git-ignored `.env`. Don't print them or paste them into chat.
 - Research output is educational, not financial advice. Treat backtest results as hypotheses. Validate with walk-forward testing and paper trading before any capital is involved.

@@ -40,13 +40,31 @@ TRIALS_FILE = Path('experiments/trials.csv')
 class Config:
     timeframe: str = '1d'
     initial_capital: float = 1_000.0
-    fee_bps: float = 120.0      # PER SIDE. Coinbase taker, lowest tier. Maker is 60.
+    fee_bps: float = 120.0      # PER SIDE. Coinbase spot taker, lowest tier. Maker is 60.
     slippage_bps: float = 5.0   # per side, on top of the fee
-    long_only: bool = True      # Coinbase spot cannot short
+    long_only: bool = True      # spot cannot short; CDE perps/futures can
+    leverage: float = 1.0       # max |position| as a multiple of equity
+    funding_bps_per_day: float = 0.0   # perps: average funding paid on open positions
 
     @property
     def bars_per_year(self) -> int:
         return BARS_PER_YEAR[self.timeframe]
+
+    @classmethod
+    def coinbase_spot(cls, **kw):
+        return cls(**kw)
+
+    @classmethod
+    def coinbase_perp(cls, fee_bps: float, leverage: float = 1.0, funding_bps_per_day: float = 1.0, **kw):
+        """
+        Coinbase Derivatives (CDE) perp or monthly future: shorting allowed.
+        fee_bps is REQUIRED: read it from Coinbase > Derivatives > fee schedule, per side,
+        as a % of notional (0.05% = 5 bps). Funding is charged hourly on CDE perps; the
+        default 1 bp/day is a placeholder, so check recent funding for the product.
+        Keep leverage low: a 1/leverage move against you wipes the position.
+        """
+        return cls(fee_bps=fee_bps, long_only=False, leverage=leverage,
+                   funding_bps_per_day=funding_bps_per_day, **kw)
 
 
 def load_csv(path: str) -> pd.DataFrame:
@@ -73,14 +91,29 @@ def backtest(prices: pd.DataFrame, signal: pd.Series, cfg: Config) -> pd.DataFra
     OPEN and earns open-to-open returns from there.
     """
     _check_alignment(prices, signal)
-    lo = 0.0 if cfg.long_only else -1.0
-    position = signal.shift(1).fillna(0).clip(lo, 1.0)       # held from open of bar t
-    ret = np.log(prices['open'].shift(-1) / prices['open'])  # open t -> open t+1
+    lo = 0.0 if cfg.long_only else -cfg.leverage
+    position = signal.shift(1).fillna(0).clip(lo, cfg.leverage)   # held from open of bar t
+    ret = prices['open'].shift(-1) / prices['open'] - 1           # open t -> open t+1
     turnover = position.diff().abs().fillna(position.abs())
     cost = turnover * (cfg.fee_bps + cfg.slippage_bps) / 1e4
-    net = (position * ret + np.log1p(-cost)).iloc[:-1]       # last bar has no next open
-    out = pd.DataFrame({'position': position, 'turnover': turnover, 'cost': cost}).iloc[:-1]
+    cost = cost + position.abs() * cfg.funding_bps_per_day / 1e4 * 365 / cfg.bars_per_year
+    # Worst move against the position inside the bar (needs high/low); a leveraged
+    # position that loses everything inside a bar is liquidated, not recovered.
+    if {'high', 'low'} <= set(prices.columns):
+        adverse = np.where(position > 0, prices['low'] / prices['open'] - 1,
+                           np.where(position < 0, 1 - prices['high'] / prices['open'], 0.0))
+        intrabar = position.abs() * np.minimum(adverse, 0)
+    else:
+        intrabar = pd.Series(0.0, index=prices.index)
+    simple = (position * ret - cost).clip(lower=-0.999999)
+    net = np.log1p(simple).iloc[:-1]                              # last bar has no next open
+    out = pd.DataFrame({'position': position, 'turnover': turnover, 'cost': cost,
+                        'intrabar_worst': intrabar}).iloc[:-1]
     out['net'] = net
+    if (out['intrabar_worst'] <= -1).any():                       # account wiped inside a bar
+        wipe = out.index[(out['intrabar_worst'] <= -1).argmax()]
+        out.loc[wipe:, 'net'] = 0.0
+        out.loc[wipe, 'net'] = np.log(1e-6)
     out['equity'] = cfg.initial_capital * np.exp(net.cumsum())
     return out
 
@@ -106,6 +139,8 @@ def metrics(bt: pd.DataFrame, cfg: Config) -> dict:
         'fees_paid_pct': round(bt['cost'].sum() * 100, 1),
         'trades': trades,
         'time_in_market_pct': round((bt['position'] != 0).mean() * 100, 1),
+        'worst_intrabar_loss_pct': round(bt['intrabar_worst'].min() * 100, 1),
+        'liquidated': bool((bt['intrabar_worst'] <= -1).any()),
         'n_bars': len(r),
     }
     return {k: v if isinstance(v, int) else float(v) for k, v in out.items()}
