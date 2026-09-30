@@ -16,6 +16,9 @@ Adapted from a widely shared article's design, with its bugs fixed:
 - walk-forward works with short test windows and keeps indicator history
 - the deflated Sharpe uses per-bar units and the spread of your real trials
 
+Known simplification: between target changes, exposure is held exactly at target (free daily
+rebalancing). A real account drifts. tools/paper/test_replay.py is the realistic check.
+
 Price input: DataFrame with UTC DatetimeIndex and 'open' and 'close' columns,
 e.g. from tools/fetch_coinbase_ohlcv.py:
     df = load_csv('Data/BTC_USD_1d.csv')

@@ -15,6 +15,10 @@ A workspace for trading research, backtesting and bot building. It bundles four 
 
 The user lost a previous trading account and has chosen to keep all money in the bank until a system passes every gate **and** 60+ days of paper trading. Support that decision. Don't suggest depositing, going live, or "small test trades" before that. Ground rules, the research log and every study's results are in `docs/RESEARCH_LOG.md`. Add each new study there, pre-registered, before running it.
 
+## Paper trading (in progress)
+
+`tools/paper/paper_trader.py` runs the approved BTC+ETH trend system (spot, 2/3 size, **$5,000 fake money**) on the user's laptop. It reads public prices only and never places orders. When asked how it's going, run `python tools/paper/paper_trader.py --report` and compare with the expectations in `docs/RESEARCH_LOG.md`. Don't change its rules mid-test; any change is a new pre-registered study and restarts the 60-day clock. Before changing the bot's logic, rerun `tools/paper/test_replay.py`, which must print PARITY OK.
+
 ## The user's setup: Coinbase (US, Texas)
 
 What the account can trade (confirmed from the user's app, 2026-09-30):

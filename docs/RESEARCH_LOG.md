@@ -192,3 +192,33 @@ At 2/3 size, 2016-05 to 2026-09, same 18 six-month folds:
 **Recommendation:** paper trade the **spot version**. It works at any account size, holds fractional amounts, has
 no leverage, no liquidation, no funding and no contract expiry, and the existing spot bot template fits it. Perps become
 worth it only for an account of $5,000 or more.
+
+---
+
+## Paper trader build and replay check, 2026-09-30
+
+User chose a **$5,000** paper account, spot version (Study 3's recommendation). Code: `tools/paper/`.
+
+**Replay check** (`tools/paper/test_replay.py`): 2019-01-01 to 2026-09-27, one decision per day on closed candles,
+filled at the next day's open, run through the bot's own code:
+
+| | Sharpe | CAGR | Max DD | Result |
+|---|---|---|---|---|
+| Backtest (quantcheck) | 0.95 | 19.2% | −21.1% | |
+| Bot, trades only on signal changes | 0.92 | 23.0% | **−26.7%** | mismatch |
+| **Bot + drift rebalance at 10 points** (threshold set before testing) | **0.99** | **21.1%** | **−21.8%** | **match** |
+
+**Finding: `quantcheck` assumes free daily rebalancing.** It holds exposure exactly at target between trades.
+A real account drifts: rallies push exposure up, and drawdowns get deeper than tested. The bot now rebalances when
+a half drifts more than 10 points from target, which reproduces the tested risk. Future studies should keep this
+in mind: the paper-trader replay is the realistic check.
+
+**Finding: the −20% kill switch fires once in the replay, on 2022-11-09** (the FTX collapse, near the bottom of the
+bear market), at −21.2%. If left halted, it would miss the 2023–24 recovery (CAGR 13.9% instead of 21.1%). The
+system's own worst drawdown (−21.8%) sits right at the switch.
+**Open decision for the user:** keep −20% as a hard stop, or make −20% a mandatory review and set the hard stop
+at about −27% (1.25× the tested worst), so it fires only if the system does worse than its own 7–10 year history.
+The bot currently uses the user's −20% hard stop, plus a warning at −15%.
+
+**Paper trading started:** first decision on the 2026-09-29 close: BTC half 42% invested, ETH half 33%, the rest cash.
+Review after 60+ decision days.
