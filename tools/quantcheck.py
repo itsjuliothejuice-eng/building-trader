@@ -40,7 +40,7 @@ TRIALS_FILE = Path('experiments/trials.csv')
 class Config:
     timeframe: str = '1d'
     initial_capital: float = 1_000.0
-    fee_bps: float = 120.0      # PER SIDE. Coinbase spot taker, lowest tier. Maker is 60.
+    fee_bps: float = 90.0       # PER SIDE. Coinbase spot taker, Intro tier (maker 50). User's fee screen 2026-09-30.
     slippage_bps: float = 5.0   # per side, on top of the fee
     long_only: bool = True      # spot cannot short; CDE perps/futures can
     leverage: float = 1.0       # max |position| as a multiple of equity
@@ -55,15 +55,18 @@ class Config:
         return cls(**kw)
 
     @classmethod
-    def coinbase_perp(cls, fee_bps: float, leverage: float = 1.0, funding_bps_per_day: float = 1.0, **kw):
+    def coinbase_perp(cls, contract_value_usd: float, fee_bps: float = 10.0, per_contract_usd: float = 0.12,
+                      leverage: float = 1.0, funding_bps_per_day: float = 1.0, **kw):
         """
         Coinbase Derivatives (CDE) perp or monthly future: shorting allowed.
-        fee_bps is REQUIRED: read it from Coinbase > Derivatives > fee schedule, per side,
-        as a % of notional (0.05% = 5 bps). Funding is charged hourly on CDE perps; the
-        default 1 bp/day is a placeholder, so check recent funding for the product.
+        Fees from the user's Intro tier (2026-09-30): 0.10% taker per side (maker 0.095%)
+        plus $0.12 per contract per side, which is folded in using contract_value_usd
+        (e.g. BTC PERP 0.01 BTC ~ $840). Funding is charged hourly; the 1 bp/day default
+        is a placeholder, so check the product's recent funding.
         Keep leverage low: a 1/leverage move against you wipes the position.
         """
-        return cls(fee_bps=fee_bps, long_only=False, leverage=leverage,
+        per_side = fee_bps + per_contract_usd / contract_value_usd * 1e4
+        return cls(fee_bps=per_side, long_only=False, leverage=leverage,
                    funding_bps_per_day=funding_bps_per_day, **kw)
 
 

@@ -11,6 +11,10 @@ A workspace for trading research, backtesting and bot building. It bundles four 
 | `.claude/skills/<68 others>` | claude-trading-skills | Quant building blocks (backtrader, vectorbt, walk-forward, Kelly, position sizing, volatility, regime detection, tax/wash-sale) plus many crypto, Solana and DeFi skills |
 | `.claude/skills/algotrader` | skill-algotrader | Indian equities (NSE / Zerodha Kite) playbook and CLI |
 
+## Where things stand (read first)
+
+The user lost a previous trading account and has chosen to keep all money in the bank until a system passes every gate **and** 60+ days of paper trading. Support that decision. Don't suggest depositing, going live, or "small test trades" before that. Ground rules, the research log and every study's results are in `docs/RESEARCH_LOG.md`. Add each new study there, pre-registered, before running it.
+
 ## The user's setup: Coinbase (US, Texas)
 
 What the account can trade (confirmed from the user's app, 2026-09-30):
@@ -25,7 +29,7 @@ What the account can trade (confirmed from the user's app, 2026-09-30):
 
 - CDE contracts have fixed sizes, so the smallest position can be large (1 BTC PERP ≈ 0.01 BTC ≈ $840, 1 ZEC PERP ≈ $1,440, 1 SOL PERP ≈ $600). Check the contract value against account size before proposing any perp trade. If one contract is more than ~25% of the account, say so.
 - Perps charge **hourly funding**. Model it (`Config.coinbase_perp(funding_bps_per_day=...)`).
-- Fees: spot is 0.60% maker / 1.20% taker at the lowest tier (~2.4% round trip). CDE futures fees are separate and much lower; ask the user for the rate from Coinbase > Derivatives rather than guessing. `Config.coinbase_perp` requires `fee_bps` for this reason.
+- Fees (user's Intro tier, 2026-09-30): spot 0.50% maker / 0.90% taker (~1.8% round trip); CDE futures and perps 0.095% maker / 0.10% taker plus $0.12 per contract (~0.2–0.3% round trip). Both are built into `quantcheck` and the Telegram scorer.
 - Live bot: `templates/live/coinbase_bot.py` is **spot only**. There is no perp bot yet.
 - Backtest data: `python tools/fetch_coinbase_ohlcv.py BTC/USD 1h --start 2023-01-01` (spot, no key). Perp history only starts mid-2025, so backtest on spot history and add perp fees and funding.
 - Relevant skills: vectorbt, backtrader, walk-forward-validation, pandas-ta, regime-detection, volatility-modeling, mean-reversion, cointegration-analysis, position-sizing, kelly-criterion, risk-management, exit-strategies, portfolio-analytics, trade-journal, coingecko-api, the tax skills, and `/trade` for stocks and ETFs. The Solana/DEX/on-chain skills don't apply.

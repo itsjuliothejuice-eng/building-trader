@@ -6,7 +6,7 @@ Score every Telegram call against real prices and grade each channel.
 
 For each CALL it measures, from the first hourly open AFTER the post (you
 can't buy before you read it), with Coinbase fees and no leverage:
-  - return after 1h, 24h and 7d, net of a 2.5% round trip (1.20% fee + 0.05% slippage, per side)
+  - return after 1h, 24h and 7d, net of your Intro-tier round trip: 0.3% via a CDE perp, 1.9% via spot
   - whether target 1 or the stop was hit first (same hour = stop, to be conservative)
   - the 24h run-up BEFORE the post (large = the coin was pumped before you were told)
   - whether the stated entry was already gone when the call went out
@@ -34,7 +34,8 @@ from extract import extract_all
 ROOT = Path(__file__).resolve().parents[2]
 REPORTS = ROOT / 'reports' / 'telegram'
 EXCHANGES = ['coinbase', 'kraken', 'kucoin', 'mexc', 'okx', 'bitget']   # Binance blocks US users
-ROUND_TRIP = 2 * (1.20 + 0.05) / 100
+SPOT_ROUND_TRIP = 2 * (0.90 + 0.05) / 100   # Intro tier spot taker + slippage, per side
+PERP_ROUND_TRIP = 2 * (0.10 + 0.05) / 100   # Intro tier CDE taker + slippage (+ $0.12/contract, ignored)
 HOUR = 3_600_000
 HORIZONS = {'1h': 1, '24h': 24, '7d': 168}
 PUMP = 0.15                                  # >15% run-up in the 24h before the call
@@ -138,7 +139,7 @@ def score_call(c, px, now_ms):
     for label, h in HORIZONS.items():
         if len(after) >= h:
             gross = sign * (after[h - 1][4] / entry - 1)
-            out[f'net_{label}'] = round((gross - ROUND_TRIP) * 100, 2)
+            out[f'net_{label}'] = round((gross - (PERP_ROUND_TRIP if perp else SPOT_ROUND_TRIP)) * 100, 2)
 
     if len(before) >= 24:
         out['runup_24h_before'] = round(sign * (before[-1][4] / before[-24][4] - 1) * 100, 2)
@@ -250,7 +251,7 @@ def write_reports(calls, cards):
     lines = [
         f'# Telegram channel scorecard ({datetime.now(timezone.utc):%Y-%m-%d %H:%M} UTC)', '',
         'Returns are % per call, unleveraged, entered at the first hourly open after the post, '
-        'minus a 2.5% Coinbase round trip. Leverage multiplies losses the same as gains.', '',
+        'minus your Coinbase round trip: 0.3% if the coin has a CDE perp, 1.9% if spot only. Leverage multiplies losses the same as gains.', '',
         '| Channel | Verdict | Calls | Scored | 7d win % | Mean 7d net | Worst 7d | Median 24h | '
         'Target before stop % | Pumped before call % | Entry already gone % | Tradeable on your Coinbase % | '
         'Results with no prior call | Edited levels | Deleted |',

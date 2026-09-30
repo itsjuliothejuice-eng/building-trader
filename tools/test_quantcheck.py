@@ -18,8 +18,8 @@ def test_costs_per_side():
     p = fake_prices(10)
     p['open'] = 100.0
     sig = pd.Series([1, 1, 0, 0, 0, 0, 0, 0, 0, 0.0], index=p.index)
-    bt = q.backtest(p, sig, q.Config(fee_bps=120, slippage_bps=5))
-    assert abs(bt['cost'].sum() - 2 * 0.0125) < 1e-12, bt['cost'].sum()
+    bt = q.backtest(p, sig, q.Config(fee_bps=90, slippage_bps=5))
+    assert abs(bt['cost'].sum() - 2 * 0.0095) < 1e-12, bt['cost'].sum()
 
 
 def test_fills_next_open():
@@ -72,7 +72,7 @@ def test_noise_is_rejected():
 def test_perp_short_profits_when_price_falls():
     p = fake_prices(4)
     p['open'] = [100.0, 100.0, 90.0, 90.0]
-    cfg = q.Config.coinbase_perp(fee_bps=0, slippage_bps=0, funding_bps_per_day=0)
+    cfg = q.Config.coinbase_perp(contract_value_usd=1e12, fee_bps=0, slippage_bps=0, funding_bps_per_day=0)
     bt = q.backtest(p, pd.Series([-1, -1, 0, 0.0], index=p.index), cfg)
     assert abs(np.exp(bt['net'].sum()) - 1.10) < 1e-9, np.exp(bt['net'].sum())
 
@@ -81,7 +81,7 @@ def test_leverage_liquidates():
     p = fake_prices(6)
     p['open'] = 100.0
     p['high'], p['low'] = 101.0, [99, 99, 60, 99, 99, 99]      # 40% wick on bar 2
-    cfg = q.Config.coinbase_perp(fee_bps=0, slippage_bps=0, leverage=3, funding_bps_per_day=0)
+    cfg = q.Config.coinbase_perp(contract_value_usd=1e12, fee_bps=0, slippage_bps=0, leverage=3, funding_bps_per_day=0)
     bt = q.backtest(p, pd.Series(3.0, index=p.index), cfg)
     assert bt['intrabar_worst'].min() <= -1 and np.exp(bt['net'].sum()) < 0.001
 
@@ -89,7 +89,7 @@ def test_leverage_liquidates():
 def test_funding_is_charged():
     p = fake_prices(366)
     p['open'] = 100.0
-    cfg = q.Config.coinbase_perp(fee_bps=0, slippage_bps=0, funding_bps_per_day=1)
+    cfg = q.Config.coinbase_perp(contract_value_usd=1e12, fee_bps=0, slippage_bps=0, funding_bps_per_day=1)
     bt = q.backtest(p, pd.Series(1.0, index=p.index), cfg)
     assert abs(bt['cost'].sum() - 364 * 0.0001) < 1e-9   # first bar is flat (fills next open)
 
