@@ -137,3 +137,58 @@ Data: 2016-05-18 to 2026-09-28, 3,784 days, CDE perp fees at Intro tier, 1 bp/da
 3. **Six-month losing stretches are normal:** 7 of 18 folds lost money, some by −15% to −21%.
    Paper trading must be judged against that, not against the good years.
 4. **2017 dominates the headline CAGR.** Since 2023 it has made +35%, +33%, +3%, +6%.
+
+---
+
+## Decision 2026-09-30: size at 2/3, keep the −20% kill switch (user chose option A)
+
+The Study 2 strategy runs at 2/3 of its position size, and the remaining third stays in cash.
+This scales positions only and leaves the signal alone, so it's not a new trial. The −20% account
+kill switch stays.
+
+## Study 3: whole-contract rounding and minimum account size (pre-registered)
+
+**Question:** CDE perps trade in whole contracts (BTC 0.01 ≈ $840, ETH 0.1 ≈ $270 today). The
+Study 2 rules at 2/3 size need fractional positions. How big must the account be before rounding
+to whole contracts stops hurting? And is spot (fractional, but 0.90% fees) better for small accounts?
+
+**Method:** same signal and fold layout as Study 2, at 2/3 size.
+- **Perp version:** each half-account's position is rounded to whole contracts, assuming today's
+  contract value relative to account size. A half holds nothing if even one contract is more
+  than it wants. Fees are Intro CDE (0.10% + $0.12/contract) plus 1 bp/day funding.
+- **Spot version:** fractional positions at Intro spot fees (0.90%).
+- **Account sizes:** $1k, $2k, $3k, $5k, $10k, $20k, $50k.
+
+**Decision rule (set before running):**
+- The smallest account where the perp version keeps Sharpe within 10% of the ideal (unrounded)
+  version **and** max drawdown no worse than −22% becomes the **minimum perp account**.
+- Below that, use the spot version, but only if it still beats 50/50 buy-and-hold on both Sharpe and drawdown.
+- If neither works at a size the user is willing to fund, paper trading uses the smallest workable size and we say so.
+
+### Study 3 results
+
+At 2/3 size, 2016-05 to 2026-09, same 18 six-month folds:
+
+| Version | Sharpe | CAGR | Max drawdown | Folds profitable | Worst fold |
+|---|---|---|---|---|---|
+| 50/50 buy & hold (spot) | 0.66 | 66% | −90% | 10/18 | −60% |
+| Ideal fractional, perp fees (reference) | 1.33 | 28.5% | **−20.3%** | 11/18 | −14% |
+| **Spot, fractional (0.90% fees)** | **1.26** | **26.8%** | **−21.8%** | 11/18 | −15% |
+| Perp, $1,000 account | 1.06 | 29.1% | −27.1% | 8/18 | −21% |
+| Perp, $2,000 account | 1.18 | 25.0% | −23.2% | 11/18 | −15% |
+| Perp, $3,000 account | 1.44* | 36.0% | −25.6% | 11/18 | −20% |
+| **Perp, $5,000 account** | 1.34 | 28.2% | −22.0% | 11/18 | −14% |
+| Perp, $10,000+ account | 1.33–1.37 | 28–29% | −20% to −22% | 11/18 | −14% to −15% |
+
+\* The $3,000 figure is higher only by rounding luck: the drawdown gets worse, so it fails the rule.
+
+**Verdict under the pre-set rule:**
+- **Minimum perp account: $5,000.** Below that, one BTC contract ($840) is too coarse a step for a half-account.
+- **Spot works at any size:** Sharpe 1.26 vs the ideal 1.33, drawdown −21.8%, and it beats buy-and-hold. It only
+  trades about 12–14 times a year per coin, so the 0.90% spot fee costs little.
+- **2/3 sizing does what option A intended:** the worst drawdown is about −20 to −22%, in line with the −20% kill switch
+  (the ideal version reached −20.3%, so the switch would have come close to firing once).
+
+**Recommendation:** paper trade the **spot version**. It works at any account size, holds fractional amounts, has
+no leverage, no liquidation, no funding and no contract expiry, and the existing spot bot template fits it. Perps become
+worth it only for an account of $5,000 or more.
