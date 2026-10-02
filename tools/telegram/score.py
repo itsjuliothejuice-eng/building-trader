@@ -23,6 +23,7 @@ import csv
 import json
 import os
 import statistics as st
+from statistics import NormalDist
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
@@ -226,6 +227,9 @@ def main(days=None):
             'median_net_24h': round(st.median(n24), 2) if n24 else None,
             'mean_net_7d': round(st.mean(n7), 2) if n7 else None,
             'worst_7d': min(n7) if n7 else None,
+            # Luck test: how many standard errors the average is above zero.
+            't_7d': round(st.mean(n7) / (st.stdev(n7) / len(n7) ** 0.5), 2) if len(n7) >= 2 and st.stdev(n7) > 0 else None,
+            'no_stop_pct': round(100 * sum(1 for c in scored if not c.get('stop')) / len(scored)) if scored else 0,
             'target_before_stop_pct': round(100 * sum(c['outcome'] == 'target' for c in levels) / len(levels)) if levels else None,
             'pumped_pct': round(100 * sum(r >= PUMP * 100 for r in runups) / len(runups)) if runups else 0,
             'entry_gone_pct': round(100 * sum(c.get('entry_gone', 0) for c in scored) / len(scored)) if scored else 0,
@@ -236,6 +240,14 @@ def main(days=None):
         }
         s['verdict'] = grade(s)
         cards.append(s)
+    # With many channels, some beat zero by luck. Bonferroni: require the luck test to clear
+    # a 5% false-alarm rate across all channels that have enough calls to be graded.
+    graded = sum(1 for s in cards if s['scored'] >= 20)
+    bar = NormalDist().inv_cdf(1 - 0.05 / max(graded, 1))
+    for s in cards:
+        if s['verdict'] == 'WORTH TESTING' and (s['t_7d'] is None or s['t_7d'] < bar):
+            s['verdict'] = 'NOT PROVEN (could be luck)'
+    print(f'luck bar: t >= {bar:.2f} across {graded} graded channels')
     cards.sort(key=lambda s: (s['mean_net_7d'] is None, -(s['mean_net_7d'] or 0)))
     write_reports(calls, cards)
 
@@ -261,17 +273,21 @@ def write_reports(calls, cards):
         'Returns are % per call, unleveraged, entered at the first hourly open after the post, '
         'minus your Coinbase round trip: 0.3% if the coin has a CDE perp, 1.9% if spot only. Leverage multiplies losses the same as gains.', '',
         '| Channel | Verdict | Calls | Scored | 7d win % | Mean 7d net | Worst 7d | Median 24h | '
-        'Target before stop % | Pumped before call % | Entry already gone % | Tradeable on your Coinbase % | Tiny coins (<$100M now) % | '
+        'Luck test (t) | Calls with no stop % | Target before stop % | Pumped before call % | Entry already gone % | Tradeable on your Coinbase % | Tiny coins (<$100M now) % | '
         'Results with no prior call | Edited levels | Deleted |',
-        '|' + '---|' * 16,
+        '|' + '---|' * 18,
     ]
     for s in cards:
         lines.append('| ' + ' | '.join(str(fmt(s[k])) for k in [
-            'channel', 'verdict', 'calls', 'scored', 'win_7d_pct', 'mean_net_7d', 'worst_7d', 'median_net_24h',
+            'channel', 'verdict', 'calls', 'scored', 'win_7d_pct', 'mean_net_7d', 'worst_7d', 'median_net_24h', 't_7d', 'no_stop_pct',
             'target_before_stop_pct', 'pumped_pct', 'entry_gone_pct', 'tradeable_pct', 'tiny_coin_pct',
             'unbacked_results', 'edited_levels', 'deleted_msgs']) + ' |')
     lines += ['', '**How to read it**',
-              '- *Verdict* needs 20+ scored calls. "WORTH TESTING" only means it goes through tools/quantcheck.py next.',
+              '- *Verdict* needs 20+ scored calls. "WORTH TESTING" needs a positive mean AND a luck test (t) above the bar '
+              'printed when the scorer runs (higher when more channels are graded). "NOT PROVEN" means positive but '
+              'indistinguishable from chance. Calls overlap in time, so even t is optimistic.',
+              '- *Calls with no stop %*: calls that never said where to get out. With no stop, "target before stop" is '
+              'automatically 100%, which is why big losing channels can show 100% there.',
               '- *Tiny coins*: share of calls on coins worth under $100M **today** (CoinMarketCap; blank without a key). '
               'Tiny, thinly traded coins are where pump-and-dumps happen.',
               '- *Tradeable on your Coinbase*: longs on coins with Coinbase spot or a CDE perp; shorts only with a CDE perp.',
