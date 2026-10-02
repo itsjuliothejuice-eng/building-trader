@@ -219,10 +219,11 @@ def main(days=None):
             'channel': title, 'calls': len(mine), 'scored': len(scored),
             'on_coinbase_pct': round(100 * sum(c['on_coinbase'] for c in scored) / len(scored)) if scored else 0,
             'tradeable_pct': round(100 * sum(c.get('tradeable', 0) for c in scored) / len(scored)) if scored else 0,
-            'tiny_coin_pct': (round(100 * sum(1 for c in mine if c.get('size_now') not in (None, 'unknown')
-                                            and (c.get('mcap_now_usd') or 0) < TINY)
-                                  / max(1, sum(1 for c in mine if c.get('size_now') not in (None, 'unknown')))))
-                              if any(c.get('size_now') not in (None, 'unknown') for c in mine) else None,
+            # Only calls priced on a crypto exchange: gold, forex and stock tickers aren't on
+            # CoinMarketCap and would otherwise count as "tiny".
+            'tiny_coin_pct': (round(100 * sum(1 for c in scored if (c.get('mcap_now_usd') or 0) < TINY)
+                                    / len([c for c in scored if c.get('size_now') not in (None, 'unknown')])))
+                              if any(c.get('size_now') not in (None, 'unknown') for c in scored) else None,
             'win_7d_pct': round(100 * sum(x > 0 for x in n7) / len(n7)) if n7 else None,
             'median_net_24h': round(st.median(n24), 2) if n24 else None,
             'mean_net_7d': round(st.mean(n7), 2) if n7 else None,
@@ -288,7 +289,7 @@ def write_reports(calls, cards):
               'indistinguishable from chance. Calls overlap in time, so even t is optimistic.',
               '- *Calls with no stop %*: calls that never said where to get out. With no stop, "target before stop" is '
               'automatically 100%, which is why big losing channels can show 100% there.',
-              '- *Tiny coins*: share of calls on coins worth under $100M **today** (CoinMarketCap; blank without a key). '
+              '- *Tiny coins*: share of scored crypto calls on coins worth under $100M **today** (CoinMarketCap; blank without a key). '
               'Tiny, thinly traded coins are where pump-and-dumps happen.',
               '- *Tradeable on your Coinbase*: longs on coins with Coinbase spot or a CDE perp; shorts only with a CDE perp.',
               '- *Pumped before call*: share of calls where the coin already rose >15% in the 24h before the post.',
