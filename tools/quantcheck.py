@@ -31,7 +31,6 @@ import json
 
 import numpy as np
 import pandas as pd
-from scipy.stats import norm, skew, kurtosis
 
 BARS_PER_YEAR = {'1m': 525_600, '5m': 105_120, '15m': 35_040, '30m': 17_520,
                  '1h': 8_760, '2h': 4_380, '4h': 2_190, '6h': 1_460, '1d': 365}
@@ -203,6 +202,7 @@ def deflated_sharpe(best_returns: pd.Series, trial_sharpes_per_bar=None, n_trial
         sr_std = 1 / np.sqrt(T)
     if n < 2:
         return {'gate': 'DEFLATED', 'pass': False, 'detail': 'log at least 2 trials; one trial cannot be deflated honestly'}
+    from scipy.stats import norm, skew, kurtosis   # imported here so the paper bot runs without scipy
     expected_max = sr_std * ((1 - EULER) * norm.ppf(1 - 1 / n) + EULER * norm.ppf(1 - 1 / (n * np.e)))
     g3, g4 = skew(r), kurtosis(r, fisher=False)
     denom = np.sqrt(max(1 - g3 * sr + (g4 - 1) / 4 * sr ** 2, 1e-12))
