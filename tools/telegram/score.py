@@ -30,6 +30,7 @@ import ccxt
 
 import store
 from extract import extract_all
+from marketcap import MarketCaps, TINY
 
 ROOT = Path(__file__).resolve().parents[2]
 REPORTS = ROOT / 'reports' / 'telegram'
@@ -178,6 +179,8 @@ def main(days=None):
     con = store.connect()
     extract_all(con)
     px, now_ms = Prices(con), int(datetime.now(timezone.utc).timestamp() * 1000)
+    caps = MarketCaps()
+    print(caps.status)
     since = (datetime.now(timezone.utc) - timedelta(days=days)).isoformat() if days else ''
 
     calls = [dict(r) for r in con.execute(
@@ -186,6 +189,7 @@ def main(days=None):
     for i, c in enumerate(calls, 1):
         try:
             c.update(score_call(c, px, now_ms))
+            c.update(caps.tag(c['symbol']))
         except Exception as err:
             c.update({'status': f'error: {type(err).__name__}'})
         if i % 25 == 0:
@@ -214,6 +218,10 @@ def main(days=None):
             'channel': title, 'calls': len(mine), 'scored': len(scored),
             'on_coinbase_pct': round(100 * sum(c['on_coinbase'] for c in scored) / len(scored)) if scored else 0,
             'tradeable_pct': round(100 * sum(c.get('tradeable', 0) for c in scored) / len(scored)) if scored else 0,
+            'tiny_coin_pct': (round(100 * sum(1 for c in mine if c.get('size_now') not in (None, 'unknown')
+                                            and (c.get('mcap_now_usd') or 0) < TINY)
+                                  / max(1, sum(1 for c in mine if c.get('size_now') not in (None, 'unknown')))))
+                              if any(c.get('size_now') not in (None, 'unknown') for c in mine) else None,
             'win_7d_pct': round(100 * sum(x > 0 for x in n7) / len(n7)) if n7 else None,
             'median_net_24h': round(st.median(n24), 2) if n24 else None,
             'mean_net_7d': round(st.mean(n7), 2) if n7 else None,
@@ -235,7 +243,7 @@ def main(days=None):
 def write_reports(calls, cards):
     REPORTS.mkdir(parents=True, exist_ok=True)
     cols = ['chat_title', 'posted_utc', 'symbol', 'direction', 'leverage', 'entry_low', 'entry_high', 'targets',
-            'stop', 'status', 'exchange', 'on_coinbase', 'coinbase_perp', 'tradeable', 'entry_price', 'entry_gone', 'runup_24h_before',
+            'stop', 'status', 'exchange', 'on_coinbase', 'coinbase_perp', 'tradeable', 'mcap_now_usd', 'cmc_rank', 'size_now', 'entry_price', 'entry_gone', 'runup_24h_before',
             'net_1h', 'net_24h', 'net_7d', 'outcome', 'targets_hit', 'edited_levels', 'backfilled', 'msg_id']
     with (REPORTS / 'calls.csv').open('w', newline='', encoding='utf-8') as f:
         w = csv.DictWriter(f, cols, extrasaction='ignore')
@@ -253,17 +261,19 @@ def write_reports(calls, cards):
         'Returns are % per call, unleveraged, entered at the first hourly open after the post, '
         'minus your Coinbase round trip: 0.3% if the coin has a CDE perp, 1.9% if spot only. Leverage multiplies losses the same as gains.', '',
         '| Channel | Verdict | Calls | Scored | 7d win % | Mean 7d net | Worst 7d | Median 24h | '
-        'Target before stop % | Pumped before call % | Entry already gone % | Tradeable on your Coinbase % | '
+        'Target before stop % | Pumped before call % | Entry already gone % | Tradeable on your Coinbase % | Tiny coins (<$100M now) % | '
         'Results with no prior call | Edited levels | Deleted |',
-        '|' + '---|' * 15,
+        '|' + '---|' * 16,
     ]
     for s in cards:
         lines.append('| ' + ' | '.join(str(fmt(s[k])) for k in [
             'channel', 'verdict', 'calls', 'scored', 'win_7d_pct', 'mean_net_7d', 'worst_7d', 'median_net_24h',
-            'target_before_stop_pct', 'pumped_pct', 'entry_gone_pct', 'tradeable_pct',
+            'target_before_stop_pct', 'pumped_pct', 'entry_gone_pct', 'tradeable_pct', 'tiny_coin_pct',
             'unbacked_results', 'edited_levels', 'deleted_msgs']) + ' |')
     lines += ['', '**How to read it**',
               '- *Verdict* needs 20+ scored calls. "WORTH TESTING" only means it goes through tools/quantcheck.py next.',
+              '- *Tiny coins*: share of calls on coins worth under $100M **today** (CoinMarketCap; blank without a key). '
+              'Tiny, thinly traded coins are where pump-and-dumps happen.',
               '- *Tradeable on your Coinbase*: longs on coins with Coinbase spot or a CDE perp; shorts only with a CDE perp.',
               '- *Pumped before call*: share of calls where the coin already rose >15% in the 24h before the post.',
               '- *Results with no prior call*: victory posts for coins the channel never called beforehand.',

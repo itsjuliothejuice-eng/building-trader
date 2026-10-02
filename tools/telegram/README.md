@@ -25,6 +25,12 @@ collector.py  ->  data/telegram/telegram.db  ->  score.py  ->  reports/telegram/
 To run it automatically: double-click `tools\telegram\run_collector.bat`, or add it to
 Task Scheduler with the trigger **At log on**.
 
+## Optional: market-cap tags (CoinMarketCap)
+
+Add your free key to `.env` as `CMC_API_KEY=...`. The scorecard then tags each call with the coin's market cap
+**today** (the free plan has no history) and shows each channel's share of calls on coins under $100M. It refreshes
+at most once a day (about 25 of the plan's ~10,000 monthly credits). Without a key, the column is just blank.
+
 ## Getting the scorecard
 
 `python tools/telegram/score.py` (or `--days 30`), then open `reports/telegram/scorecard.md`.
@@ -43,7 +49,8 @@ read it). It is unleveraged and charged Coinbase's 2.5% round trip.
 | Entry already gone % | The stated entry was unreachable by the time you could act |
 | Results with no prior call | Victory posts for coins that were never called: hindsight marketing |
 | Edited levels / Deleted | Rewriting or deleting calls after the fact (only seen for messages caught live) |
-| On Coinbase % | Whether you could even trade these coins |
+| Tradeable on your Coinbase % | Whether you could take the trade: longs on spot or a CDE perp, shorts only on a perp |
+| Tiny coins (<$100M now) % | Calls on small, thin coins: prime pump-and-dump territory (needs `CMC_API_KEY`) |
 
 A channel graded **WORTH TESTING** still has to pass `tools/quantcheck.py` before any money is involved.
 
