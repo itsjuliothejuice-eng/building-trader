@@ -24,8 +24,8 @@ START = '2019-01-01'
 
 def main(data_dir='Data', kill_switch=None):
     tmp = Path(tempfile.mkdtemp())
-    # Parity is checked with the kill switch off: the backtest has none. Its effect is reported separately.
-    pt.KILL_SWITCH = float(kill_switch) if kill_switch else -1.0
+    # Default: the bot's real hard stop. It must not fire on history the backtest considers normal.
+    pt.KILL_SWITCH = float(kill_switch) if kill_switch else pt.KILL_SWITCH
     pt.DIR, pt.STATE = tmp, tmp / 'state.json'
     raw = {c: q.load_csv(f'{data_dir}/{c}_USD_1d.csv')[['open', 'high', 'low', 'close']] for c in pt.COINS}
     common = raw['BTC'].index.intersection(raw['ETH'].index)

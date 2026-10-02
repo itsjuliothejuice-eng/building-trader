@@ -9,7 +9,8 @@ It reads public Coinbase prices and keeps a simulated account on disk.
     python tools/paper/paper_trader.py            # check once: act on any newly closed daily candle
     python tools/paper/paper_trader.py --loop     # keep running, check every hour
     python tools/paper/paper_trader.py --report   # performance so far vs the backtest's expectations
-    python tools/paper/paper_trader.py --resume   # restart after the kill switch fired (after reviewing why)
+    python tools/paper/paper_trader.py --ack      # acknowledge a -20% review after checking it
+    python tools/paper/paper_trader.py --resume   # restart after the -27% hard stop fired (after reviewing why)
 
 Decisions use the exact same signal function as the backtest (tools/study_trend.py).
 Each day, after the UTC daily candle closes, it computes the target position from
@@ -39,8 +40,10 @@ START_CASH = 5_000.0
 SIZE = 2 / 3
 FEE = 0.0090                 # Intro-tier spot taker, per side
 SLIPPAGE = 0.0005            # per side, same as the backtest
-KILL_SWITCH = -0.20          # sell everything and halt, from the high-water mark (user's rule, 2026-09-30)
-WARN_AT = -0.15              # loud warning to review, no selling
+# Risk levels, from the account's high-water mark (user's decision 2026-10-02, see RESEARCH_LOG):
+WARN_AT = -0.15              # informational: normal for this system about 1 day in 3
+REVIEW_AT = -0.20            # stop-and-review alarm: keeps following the rules, flags daily until --ack
+KILL_SWITCH = -0.27          # hard stop: sell everything and halt (1.25x the tested worst drawdown, -21.8%)
 MIN_TRADE_USD = 1.0          # Coinbase minimum order
 DRIFT_REBALANCE = 0.10       # rebalance when a half drifts >10 points from target (set before testing)
 DIR = ROOT / 'data' / 'paper'
@@ -94,7 +97,7 @@ def targets_from_history(hist: dict) -> tuple:
 
 def new_state():
     return {'started_utc': datetime.now(timezone.utc).isoformat(timespec='seconds'),
-            'start_cash': START_CASH, 'halted': False, 'last_decision_day': None,
+            'start_cash': START_CASH, 'halted': False, 'review_required': False, 'last_decision_day': None,
             'high_water': START_CASH, 'fees_paid': 0.0,
             'halves': {c: {'cash': START_CASH / 2, 'qty': 0.0, 'target': 0.0} for c in COINS}}
 
@@ -198,7 +201,18 @@ def step(st, hist: dict, px: dict, verbose=True):
                 continue
             t = rebalance(st, c, targets[c], px[c], day_s, reason)
             trades += [t] if t else []
-        note = f'WARNING: drawdown {dd:.1%}, review (kill switch at {KILL_SWITCH:.0%})' if dd <= WARN_AT else 'ok'
+        if dd <= REVIEW_AT and not st.get('review_acked'):
+            st['review_required'] = True
+        if dd > WARN_AT:
+            st['review_acked'] = False           # a new episode will need a new review
+        if st.get('review_required'):
+            note = (f'REVIEW REQUIRED: drawdown {dd:.1%} passed {REVIEW_AT:.0%}. Still following the rules. '
+                    f'Compare with the backtest, then run --ack. Hard stop at {KILL_SWITCH:.0%}.')
+        elif dd <= WARN_AT:
+            # Not an alarm: in the 2019-2026 replay the account was 15%+ below its high on about 1 day in 3.
+            note = f'drawdown {dd:.1%}: within the normal range (review at {REVIEW_AT:.0%}, hard stop at {KILL_SWITCH:.0%})'
+        else:
+            note = 'ok'
 
     st['last_decision_day'] = day_s
     eq = equity(st, px)
@@ -248,7 +262,8 @@ def report():
     print(f"  50/50 hold        {hold:+.1%} over the same days (before fees)")
     print(f"  Worst drawdown    {d['drawdown_pct'].min():.1f}%   (backtest worst at 2/3 size: about -22%)")
     print(f"  Trades            {len(trades)}   fees paid ${st['fees_paid']:,.2f}")
-    print(f"  Kill switch       {'FIRED, halted' if st['halted'] else 'not triggered'}")
+    print(f"  Hard stop ({KILL_SWITCH:.0%}) {'FIRED, halted' if st['halted'] else 'not triggered'}")
+    print(f"  Review ({REVIEW_AT:.0%})    {'REQUIRED: compare with the backtest, then --ack' if st.get('review_required') else 'not required'}")
     print(f"  Days to go        {max(0, 60 - days)} more before the 60-day review")
     print('\nWhat to expect (from the backtest): about 1 trade per coin per month, losing 6-month stretches')
     print('about 1 in 3, and single-month dips of 5-10% are normal. Judge after 60+ days, not week to week.')
@@ -258,10 +273,17 @@ def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument('--loop', action='store_true', help='keep running and check every hour')
     ap.add_argument('--report', action='store_true', help='show performance so far')
-    ap.add_argument('--resume', action='store_true', help='clear the kill-switch halt')
+    ap.add_argument('--resume', action='store_true', help='clear the hard-stop halt')
+    ap.add_argument('--ack', action='store_true', help='acknowledge a -20%% review after checking it')
     a = ap.parse_args()
     if a.report:
         return report()
+    if a.ack:
+        st = load_state()
+        st['review_required'], st['review_acked'] = False, True
+        save_state(st)
+        print('Review acknowledged. It will flag again in a new drawdown episode after recovering above -15%.')
+        return
     if a.resume:
         st = load_state()
         st['halted'] = False

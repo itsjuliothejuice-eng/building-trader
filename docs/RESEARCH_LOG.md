@@ -14,7 +14,7 @@ calm, not in the middle of a trade:
 |---|---|
 | Leverage | 1x (none). Never above 2x effective |
 | Risk per trade | 1% of account at the stop |
-| Account kill switch | Stop all trading at −20% from the high-water mark; review before restarting |
+| Account kill switch | ~~−20% hard stop~~ → review alarm at −20%, hard stop at −27% (decision 2026-10-02 below) |
 | Starting size when live | Small: money whose total loss would not change anything important |
 | Adding money | Only after 3+ months live that match the paper and backtest results |
 | Benchmark | Every system must beat simply holding the same asset on a **risk-adjusted** basis (Sharpe and drawdown), after fees |
@@ -222,3 +222,15 @@ The bot currently uses the user's −20% hard stop, plus a warning at −15%.
 
 **Paper trading started:** first decision on the 2026-09-29 close: BTC half 42% invested, ETH half 33%, the rest cash.
 Review after 60+ decision days.
+
+## Decision 2026-10-02: −20% becomes a review alarm, hard stop at −27% (user took the recommendation)
+
+| Level (from high-water mark) | What happens |
+|---|---|
+| −15% | Information only. Normal: replay shows it on 963 of 2,827 days |
+| −20% | **Review required**: keep following the rules, flag daily until reviewed with Claude (`--ack`) |
+| −27% | **Hard stop**: sell everything, halt until `--resume` (1.25× the tested worst, −21.8%) |
+
+Replay 2019–2026 with these levels: PARITY OK (Sharpe 0.99, CAGR 21.1%, max DD −21.8%). The review fired once
+(2022-11-09) and the hard stop never fired. This changes the risk rule, not the trading rule, so the 60-day paper clock
+is not reset. The ground-rules table's "−20% kill switch" is superseded by this entry.

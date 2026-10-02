@@ -7,7 +7,12 @@ account, at live Coinbase prices. It **never logs in, needs no API key and place
   Intro spot fees (0.90% + 0.05% slippage per side).
 - It acts once a day, after the daily candle closes at **00:00 UTC (7 PM Central)**.
   It trades when the rule's target changes, or when a position drifts more than 10 points off target.
-- Warns at −15% from the account's high, and at −20% sells everything and halts until you run `--resume`.
+- Risk levels, measured from the account's high (user's decision 2026-10-02):
+  - **−15%: information only.** This is normal: in the 2019–2026 replay the account was this far down on about 1 day in 3.
+  - **−20%: stop and review.** It keeps following the rules, but shows `REVIEW REQUIRED` daily until you check the
+    numbers with Claude and run `--ack`. In the replay this happened once (Nov 2022, the FTX crash).
+  - **−27%: hard stop.** It sells everything and halts until `--resume`. That's 1.25× the worst drop ever seen in testing,
+    so firing means the system is behaving worse than in 7–10 years of history. It never fired in the replay.
 
 ## Start it (Windows, from the repo folder)
 
