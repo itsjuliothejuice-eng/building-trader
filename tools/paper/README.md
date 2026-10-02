@@ -18,6 +18,7 @@ account, at live Coinbase prices. It **never logs in, needs no API key and place
 
 ```powershell
 git pull
+python -m pip install -r tools/requirements.txt   # once
 python tools/paper/paper_trader.py          # first run: loads 10 years of prices, makes today's decision
 ```
 To keep it running, double-click `tools\paper\run_paper.bat` (it checks hourly and restarts itself).
