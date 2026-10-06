@@ -234,3 +234,54 @@ Review after 60+ decision days.
 Replay 2019–2026 with these levels: PARITY OK (Sharpe 0.99, CAGR 21.1%, max DD −21.8%). The review fired once
 (2022-11-09) and the hard stop never fired. This changes the risk rule, not the trading rule, so the 60-day paper clock
 is not reset. The ground-rules table's "−20% kill switch" is superseded by this entry.
+
+---
+
+## Study 4: daily-trading strategies on BTC and ETH perps (pre-registered 2026-10-06)
+
+**Question:** can a strategy that makes a fresh decision every day, holding for about a day, beat its costs
+on the user's account? The user asked whether we can "trade every day". This answers it with data.
+
+**Setup:** CDE perps (long and short allowed), 1x (no leverage), Intro fees (0.10% + $0.12/contract per side),
+5 bps slippage, 1 bp/day funding on open positions, daily candles, fills at the next day's open. Data:
+Coinbase BTC since 2016, ETH since May 2016. Each rule decides at the daily close from closed candles only.
+No parameters are tuned; the values below are set before running.
+
+| Rule | Position for the next day | Mechanism (who loses) |
+|---|---|---|
+| A. Fade big moves | If yesterday moved more than 1× its 30-day typical daily move, bet the other way (down day → long, up day → short); else flat | Panic sellers and FOMO buyers who pay for instant execution; overreaction reverses |
+| B. Daily breakout | Long if the close is above the prior 20-day high, short if below the prior 20-day low; else flat | Stop-loss cascades and late chasers push breakouts further |
+| C. Follow yesterday | Long after an up day, short after a down day | Slow-reacting traders; underreaction continues |
+
+A and C are opposites. Testing both is deliberate: one will look better by chance, and the deflated Sharpe accounts for that.
+
+**Trials:** 3 rules × 2 coins = **6 new**, for 19 in total including Studies 1–2.
+
+**Pass criteria (set now):** all three gates (causal; DSR > 0.95 over 19 trials; ≥60% of 180-day walk-forward
+folds profitable with a positive total), **and** beat buy-and-hold of the same coin on Sharpe and max drawdown.
+Fees paid and trades per year are reported for every rule.
+
+**Expectation, written in advance:** all fail after fees. A rule that passes earns its own paper test; it does not replace the current one.
+
+### Study 4 results: all 6 rejected
+
+| Coin | Rule | Sharpe | CAGR | Max DD | Trades/yr | Fees paid (cumulative, % of account) |
+|---|---|---|---|---|---|---|
+| BTC | Buy & hold (spot) | 0.73 | 63% | −84% | — | 1% |
+| BTC | A. Fade big moves | −0.82 | −27% | −97% | 139 | 280% |
+| BTC | B. Daily breakout | 0.03 | 1% | −60% | 54 | 100% |
+| BTC | C. Follow yesterday | −1.53 | −65% | **−100%** | 191 | 715% |
+| ETH | Buy & hold (spot) | 0.55 | 67% | −94% | — | 1% |
+| ETH | A. Fade big moves | −0.83 | −38% | −99% | 145 | 331% |
+| ETH | B. Daily breakout | −0.33 | −12% | −81% | 52 | 109% |
+| ETH | C. Follow yesterday | −1.34 | −71% | **−100%** | 193 | 815% |
+
+Every rule failed the deflated Sharpe (DSR 0.000), walk-forward (2–11 of 19 folds) and the benchmark. All passed the causal check, so the failures are real, not coding errors.
+
+**Diagnostic, not a trial: the same rules with zero fees.** Sharpe ranged from −0.55 to +0.36. Even free, none came close
+to holding the coin (0.73 / 0.55). The best, BTC breakout, made 11%/yr gross against 63% for holding. **No edge existed before
+costs, and fees then turned a coin flip into a steady loss.** Daily direction in BTC and ETH is, for these rules,
+indistinguishable from noise.
+
+**Conclusion:** daily trading is closed as a research direction for this account. The approved system (Study 2,
+about 12–14 trades/yr per coin) stays the plan. The trial log now holds 19 trials, all counted in future deflated Sharpes.
