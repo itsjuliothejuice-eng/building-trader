@@ -285,3 +285,23 @@ indistinguishable from noise.
 
 **Conclusion:** daily trading is closed as a research direction for this account. The approved system (Study 2,
 about 12–14 trades/yr per coin) stays the plan. The trial log now holds 19 trials, all counted in future deflated Sharpes.
+
+---
+
+## Channel audit: Evening Trader (incl. "Performance Tracking - Evening Trader"), 2026-10-06
+
+Run by the user with `tools/telegram/audit_channel.py`, after considering their premium service.
+
+| | Calls | Real 7-day avg (after fees, no leverage) | Real win rate |
+|---|---|---|---|
+| Announced with a result post | 108 | +1.37% | 56% |
+| Never mentioned again | 175 | +0.31% | 40% |
+| All calls | 283 | +0.71% | 46% |
+
+- 66 calls hit their stop. 1 result post admitted a loss, and 54 were never mentioned.
+- Result posts claimed **+81% on average**; the same calls really moved **+1.4%**. Leverage was stated in 1 of 168 claims.
+- 94 result posts were for coins with no visible call in the 14 days before (premium-only or hindsight; can't be verified).
+- Earlier scorecard luck test on their calls: t = 0.50 (indistinguishable from chance), worst call −91%.
+
+**Verdict:** the results thread is selective: wins are shown, stops are not, and percentages are inflated about 60×.
+Not transparent, no demonstrated edge. Premium service: don't buy.
