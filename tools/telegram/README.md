@@ -36,6 +36,15 @@ at most once a day (about 25 of the plan's ~10,000 monthly credits). Without a k
 `python tools/telegram/score.py` (or `--days 30`), then open `reports/telegram/scorecard.md`.
 Or just ask Claude in this repo: "score my Telegram channels".
 
+## Audit one channel's own track record
+
+```
+python tools/telegram/audit_channel.py "Evening Trader"
+```
+Splits the channel's calls into ones they later announced with a result post and ones they never mentioned again,
+measures both with real prices, and compares their claimed % (and leverage) with what actually happened.
+Writes `reports/telegram/audit_<name>.md`. Use it before paying for any premium group.
+
 ## What the scorecard means
 
 Each call is entered at the first hourly open **after** the post (you can't buy before you
