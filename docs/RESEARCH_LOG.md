@@ -408,3 +408,55 @@ version still lost money. As in Study 4, there's no edge before costs. Spot fees
 or short, with either trigger, even before fees. That matches Study 4: in this data, short holding periods (days) are noise, while
 the paper system's slow trend-following (weeks to months) is the only thing that has held up. **Survivorship bias would only make the true
 List B result worse.** The trial log now holds 25 trials. The paper test continues unchanged.
+
+---
+
+## Study 6: the approved trend rules on many coins (pre-registered 2026-10-08)
+
+**Question:** the paper system's slow trend rules are the only thing that has held up, but only on BTC and ETH.
+Do the same rules do better spread across many coins? And does it help to hold only the strongest-trending ones?
+
+**Mechanism (who loses):** the same as Study 1. Prices trend for weeks to months because news spreads slowly, buyers chase
+past winners and forced sellers push falling prices further. The counterparty is the late chaser and the panic seller.
+The "strongest coins" version adds cross-sectional momentum: coins that outperformed the others keep doing so for a while.
+This is a documented crypto factor (Liu, Tsyvinski & Wu, *Journal of Finance*, 2022).
+
+**Per-coin rules: exactly Study 2's, unchanged** (`trend_signal`, long only, vol control). Four lookbacks (20/60/120/250 days),
+40%/yr vol target capped at 1x, 25-point buffer, at **2/3 size** like the paper system.
+
+**Universe at each date** (same as Study 5, decided only from data available that day): at least 365 days of candles and 30-day average
+Coinbase dollar volume ≥ $1M.
+- **List A:** the 22 perp coins with Coinbase spot history.
+- **List B:** 296 spot coins (stablecoins, pegged and gold tokens excluded).
+
+**Two ways to split the account (2 lists × 2 = 4 trials, 29 in total):**
+
+| Version | How |
+|---|---|
+| **Equal** | Every eligible coin gets an equal slice (1/N of 2/3 of the account) and runs the trend rules in its slice. Cash when its trend is off |
+| **Top 10** | Every 7 days, rank eligible coins with the trend on by their average return over 20/60/120/250 days and hold the top 10, each in a 1/10 slice running the trend rules. A coin that drops out is sold at the next weekly ranking; one whose trend turns off goes to cash at once |
+
+**Execution (realistic, unlike `quantcheck`'s free rebalancing):** decide at the close, trade at the next open. Holdings drift with
+prices, and a coin is traded only when its exposure is more than 10% of its slice away from target. This is the paper trader's rule.
+Spot only (whole perp contracts are far too big for slices of a $5,000 account). Fees: 0.90% per side, plus 5 bps slippage (List A)
+or 10 bps (List B).
+
+**Engine check (not a trial):** the paper system itself (BTC+ETH, two halves) run through the new engine must come out close to its
+`quantcheck` result. Otherwise the engine is wrong, and nothing else counts.
+
+**Period, walk-forward and pass criteria: the same as Study 5.**
+- 2017-01-01 to the latest day, with 180-day folds from 2018-01-01.
+- Causal check (every coin's signal and the weekly ranking recomputed on truncated history).
+- DSR > 0.95 over 29 trials.
+- ≥ 60% of folds profitable, positive total.
+- **Beat the paper system by ≥ 0.20 Sharpe** (survivorship margin), with max drawdown no worse than −27%.
+
+Reported: worst fold, fees, trades per year, year by year, the result without the 3 best coins, and an equal-weight buy-and-hold
+of the same list for context.
+
+**Survivorship bias:** worse here than in Study 5 for List B, because "hold the winners" benefits most from never seeing the coins that died.
+Trend rules do sell falling coins, which limits the damage, but they still buy some coins that later die.
+
+**Expectation, written in advance:** List A "equal" is the most likely to pass, as a broader version of what already works.
+List B is more likely to look good on paper and be flattered by survivorship. A version that passes earns its own paper test next to
+the current one. It does not replace it.
