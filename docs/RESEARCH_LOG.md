@@ -305,3 +305,64 @@ Run by the user with `tools/telegram/audit_channel.py`, after considering their 
 
 **Verdict:** the results thread is selective: wins are shown, stops are not, and percentages are inflated about 60×.
 Not transparent, no demonstrated edge. Premium service: don't buy.
+
+---
+
+## Study 5: Simon Ree's "Bounce 2.0" on many coins (pre-registered 2026-10-08)
+
+**Question:** does "trade only the strongest trends, buy the pullback to the 21-day EMA, exit at a fixed target or
+the pullback's stop" beat the approved paper system once it's spread across many coins? The user asked not to be
+limited to BTC, so two coin lists run side by side. Source: Simon Ree, *The Tao of Trading* (2021), Bounce 2.0.
+
+**Mechanism (who loses):** in an established trend, short-term holders sell a dip out of fear or to lock in profits.
+Trend-following funds and dip buyers step in at the moving average and resume the trend. The counterparty is the
+weak-handed seller at the pullback low. Risk: the trend ends and the "dip" is the first leg of a fall. The stop
+is there for that case.
+
+**Indicators (daily closes):** EMA 8/21/34/55/89; ATR(14), Wilder; ADX(13); slow Stochastic %K(8) smoothed 3; RSI(2), Wilder.
+
+**Rules, long side (short side mirrored):**
+
+| Step | Rule |
+|---|---|
+| Trend | EMA 8 > 21 > 34 > 55 > 89 today, ADX(13) ≥ 20, and EMA 34 > EMA 89 on each of the last 84 days (~4 months) |
+| Market filter | BTC close above its 200-day simple average (below, for shorts) |
+| Pullback (setup) | Stochastic ≤ 40 (≥ 60 short), low ≤ EMA21 + 1 ATR, close ≥ EMA21 − 1 ATR; counts for 5 days |
+| Trigger, version R | RSI(2) crosses back above 10 (below 90 short) |
+| Trigger, version H | Close above the high of the lowest-low candle of the previous 4 days (below the low of the highest-high candle, short) |
+| Entry | Next day's open. Skipped if that open is already past the stop or the target |
+| Stop | Lowest low of the last 5 days (highest high, short). Gap through it → filled at the open |
+| Target | EMA21 + 2 ATR at the signal day (− for short). Stop and target hit the same day → counted as the stop |
+| Exit | Only stop or target. No other exits |
+| Size | Risk 1% of equity to the stop, fees included. Max 20% of equity per coin, total ≤ 100% (no leverage), one position per coin. More signals than room → highest ADX first |
+
+**Universe at each date (decided only from data available that day):** at least 365 days of candles and 30-day
+average Coinbase dollar volume ≥ $1M.
+- **List A:** the 24 coins with CDE perps (1000PEPE/1000SHIB → PEPE/SHIB). A coin with no Coinbase spot history is left out and named.
+  Costs: 0.10% + $0.12 per contract per side (contract values from Coinbase, 2026-10-08), 5 bps slippage, 1 bp/day funding on open positions.
+- **List B:** every active Coinbase USD spot coin, minus stablecoins and tokens pegged to another asset
+  (wrapped/staked BTC, ETH and SOL, and gold tokens). Long only. Costs: 0.90% taker per side, 10 bps slippage (thinner coins).
+  All exits are charged as taker (conservative).
+
+**Trials:** List A × {long only, long and short} × {R, H} = 4, plus List B × long only × {R, H} = 2, so **6 new and 25 in total**.
+
+**Period:** 2017-01-01 to the latest closed day. Walk-forward uses six-month (180-day) folds starting 2018-01-01. The rules are fixed,
+so this tests consistency over time.
+
+**Pass criteria (set now):**
+1. Causal: every coin's signals unchanged on truncated history.
+2. Deflated Sharpe > 0.95 over 25 trials.
+3. Walk-forward: ≥ 60% of folds profitable, positive total.
+4. **Beats the paper system** (Study 2 rules, 2/3 size, spot fees) on the same dates. Sharpe must be at least
+   **0.20 higher**, a margin added because both lists contain only coins that survived to today, and max drawdown no worse than −27%.
+
+Reported for each version: worst fold, total fees, trades per year, win rate, average win and loss in R, year by year,
+and the result without its 3 best coins. For List A, a diagnostic (not a trial) reports how many signals a $5,000 account
+could actually take in whole contracts.
+
+**Survivorship bias:** only coins listed today can be downloaded. Coins that died are missing, which flatters List B most.
+The +0.20 Sharpe margin is a rough allowance for this, not a correction.
+
+**Expectation, written in advance:** List B most likely fails on fees (1.8% per round trip against targets of about 2 ATR).
+List A is a genuine unknown. A version that passes earns its own paper test. It doesn't replace the current one, and the
+current 60-day paper test continues untouched.
