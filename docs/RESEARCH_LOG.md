@@ -460,3 +460,42 @@ Trend rules do sell falling coins, which limits the damage, but they still buy s
 **Expectation, written in advance:** List A "equal" is the most likely to pass, as a broader version of what already works.
 List B is more likely to look good on paper and be flattered by survivorship. A version that passes earns its own paper test next to
 the current one. It does not replace it.
+
+### Study 6 results: all 4 rejected; BTC and ETH carry everything
+
+Code: `tools/study_many_trend.py`. Period: 2017-01-01 to 2026-10-06, on the same 22 / 296 coins as Study 5.
+
+**Engine check: OK.** The paper system run through the new engine (with real drift) gave Sharpe 1.34 and max DD −21.9%, against `quantcheck`'s 1.30 and −21.8%.
+
+| Version | Sharpe | CAGR | Max DD | Trades/yr | Fees paid | Folds profitable | Worst fold | DSR |
+|---|---|---|---|---|---|---|---|---|
+| **Paper system (BTC+ETH, 2/3)** | **1.30** | **28.7%** | **−21.8%** | ~25 | | | | |
+| List A equal-weight buy & hold | 0.52 | 52.3% | −88.7% | | | | | |
+| List B equal-weight buy & hold | 0.22 | 20.0% | −93.7% | | | | | |
+| A equal | 1.13 | 21.0% | −23.3% | 151 | 24% | 8/17 | −14.2% | 0.027 |
+| A top 10 | 0.87 | 10.8% | −23.4% | 129 | 23% | 8/17 | −8.1% | 0.003 |
+| B equal | 0.95 | 16.4% | −22.9% | 502 | 25% | 5/17 | −14.5% | 0.007 |
+| B top 10 | 0.45 | 6.2% | −34.9% | 175 | 30% | 6/17 | −10.9% | 0.000 |
+
+All four passed the causal check and failed the deflated Sharpe, walk-forward and the benchmark.
+
+**Without the 3 best coins** (BTC, ETH and LTC, or ZEC/XLM in the top-10 versions), Sharpe fell to **0.08–0.62**. Most of each version's profit
+came from BTC and ETH. The other 20 or 294 coins mostly diluted it.
+
+| Year | 2017 | 2018 | 2019 | 2020 | 2021 | 2022 | 2023 | 2024 | 2025 | 2026 |
+|---|---|---|---|---|---|---|---|---|---|---|
+| Paper system | +259% | −16% | +20% | +61% | +50% | −12% | +22% | +20% | +2% | +3% |
+| A equal | +172% | −13% | +13% | +39% | +26% | −9% | +15% | +29% | −3% | +7% |
+| B equal | +171% | −13% | +13% | +24% | +28% | −9% | +13% | +8% | −8% | +4% |
+
+**What it means:**
+- **The trend rules protect on any list.** Every version kept max drawdown at −23% to −35%, where holding the same coins lost 89–94%.
+  The rules work as a safety device on altcoins too.
+- **But altcoins trend less cleanly than BTC and ETH,** so giving them a slice lowers returns in most years. The paper system won
+  7 of the 9 full years. "Equal" lost to it in almost every year from 2019 on.
+- **Holding only the 10 strongest coins was worse, not better.** "Strongest over the last 1–12 months" often meant "about to reverse",
+  and the weekly rotation cost fees. The cross-sectional momentum factor didn't survive Coinbase spot costs and these rules.
+- **Survivorship bias flatters every alt version,** so the true gap to the paper system is larger than shown.
+
+**Conclusion:** concentrating on BTC and ETH isn't a limitation of the paper system; it's where its edge comes from. No change to the
+paper test. The trial log now holds 29 trials.
