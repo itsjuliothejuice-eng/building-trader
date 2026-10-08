@@ -366,3 +366,45 @@ The +0.20 Sharpe margin is a rough allowance for this, not a correction.
 **Expectation, written in advance:** List B most likely fails on fees (1.8% per round trip against targets of about 2 ATR).
 List A is a genuine unknown. A version that passes earns its own paper test. It doesn't replace the current one, and the
 current 60-day paper test continues untouched.
+
+### Study 5 results: all 6 rejected
+
+Data: Coinbase daily candles for 402 USD spot coins, downloaded 2026-10-08 (`tools/fetch_coinbase_universe.py`).
+- **List A:** 22 coins. BNB and HYPE have no Coinbase spot history, so they're left out.
+- **List B:** 296 coins with at least a year of history. Excluded: CBETH, LSETH, JITOSOL, MSOL (pegged), PAXG (gold), and the stablecoins PAX, USD1, USDS, USDT.
+- **Period:** 2017-01-01 to 2026-10-07. Code: `tools/study_bounce.py`; simulator checks in `tools/test_study_bounce.py`.
+
+| Version | Sharpe | CAGR | Max DD | Trades/yr | Win rate | Avg trade | Fees paid | Folds profitable | Worst fold |
+|---|---|---|---|---|---|---|---|---|---|
+| **Paper system (Study 2, 2/3 size, spot)** | **1.30** | **28.7%** | **−21.8%** | ~25 | | | | | |
+| A long only, R | −0.49 | −1.8% | −21.5% | 5 | 25% | −0.34R | 3% | 2/17 | −5.2% |
+| A long only, H | −0.39 | −1.1% | −10.6% | 10 | 61% | −0.10R | 3% | 3/17 | −4.3% |
+| A long+short, R | −0.27 | −1.7% | −32.2% | 15 | 33% | −0.10R | 10% | 3/17 | −6.7% |
+| A long+short, H | −0.50 | −3.2% | −34.6% | 31 | 58% | −0.09R | 13% | 5/17 | −10.6% |
+| B spot long only, R | −0.77 | −5.4% | −44.2% | 14 | 25% | −0.39R | 26% | 1/17 | −14.5% |
+| B spot long only, H | −0.86 | −5.8% | −44.3% | 30 | 49% | −0.19R | 35% | 2/17 | −18.9% |
+
+(R = 1% of equity, the amount risked per trade. Fees paid = cumulative, as % of equity.)
+
+Every version passed the causal check, so the code doesn't peek ahead. Every version failed the deflated Sharpe (DSR 0.000 after 25 trials),
+walk-forward and the benchmark, mostly by a wide margin. None came close to the extra +0.20 Sharpe margin.
+
+**Diagnostic, not a trial: the same six versions with zero fees, slippage and funding.** Sharpe ranged from −0.13 to −0.44, and every
+version still lost money. As in Study 4, there's no edge before costs. Spot fees then turn a small loss into a large one (List B: −5% to −6%/yr).
+
+**Why it fails, from the trade records:**
+- **Version H wins often but small:** a 49–61% win rate, but the average win is 0.45R and the average loss about 0.9R.
+  The target (EMA21 + 2 ATR) sits close to the entry, because the trigger only fires after price has already bounced. The stop (the pullback
+  low) sits further away. Winning 6 times out of 10 at about half a unit, while losing a full unit, loses money.
+- **Version R wins big but rarely:** the average win is 1.3–1.4R, but only 25–33% of trades win. RSI(2) back above 10 fires early in a
+  fall that often keeps going.
+- **No coin carried it:** the best coin in each version added at most +6% over ten years, so removing the top 3 coins makes it worse, not better.
+  Losses were spread across BTC, ETH, LTC and LINK, the most-traded coins.
+- **Shorts added drawdown** (−32% to −35%) without adding return, the same finding as Study 1.
+- **$5,000 whole-contract check (List A):** 95–100% of trades were in coins whose single contract fits the $1,000-per-coin cap.
+  Contract size isn't what holds it back. The rules are.
+
+**Conclusion:** "buy the dip to the 21 EMA in the strongest trends" has no edge on Coinbase coins, whether on 22 coins or 296, long
+or short, with either trigger, even before fees. That matches Study 4: in this data, short holding periods (days) are noise, while
+the paper system's slow trend-following (weeks to months) is the only thing that has held up. **Survivorship bias would only make the true
+List B result worse.** The trial log now holds 25 trials. The paper test continues unchanged.

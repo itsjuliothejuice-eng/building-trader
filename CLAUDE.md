@@ -35,7 +35,7 @@ What the account can trade (confirmed from the user's app, 2026-09-30):
 - Perps charge **hourly funding**. Model it (`Config.coinbase_perp(funding_bps_per_day=...)`).
 - Fees (user's Intro tier, 2026-09-30): spot 0.50% maker / 0.90% taker (~1.8% round trip); CDE futures and perps 0.095% maker / 0.10% taker plus $0.12 per contract (~0.2–0.3% round trip). Both are built into `quantcheck` and the Telegram scorer.
 - Live bot: `templates/live/coinbase_bot.py` is **spot only**. There is no perp bot yet.
-- Backtest data: `python tools/fetch_coinbase_ohlcv.py BTC/USD 1h --start 2023-01-01` (spot, no key). Perp history only starts mid-2025, so backtest on spot history and add perp fees and funding.
+- Backtest data: `python tools/fetch_coinbase_ohlcv.py BTC/USD 1h --start 2023-01-01` (spot, no key). Every USD spot coin, daily: `python tools/fetch_coinbase_universe.py` (into `Data/universe/`; today's listings only, so survivorship bias applies). Perp history only starts mid-2025, so backtest on spot history and add perp fees and funding.
 - Relevant skills: vectorbt, backtrader, walk-forward-validation, pandas-ta, regime-detection, volatility-modeling, mean-reversion, cointegration-analysis, position-sizing, kelly-criterion, risk-management, exit-strategies, portfolio-analytics, trade-journal, coingecko-api, the tax skills, and `/trade` for stocks and ETFs. The Solana/DEX/on-chain skills don't apply.
 
 ## Validation gates (every strategy, no exceptions)
