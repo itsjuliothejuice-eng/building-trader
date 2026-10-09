@@ -654,3 +654,46 @@ so it isn't only stale prices in thin markets. Sports are two-thirds of the favo
   not a finding. It was spotted after looking at the data, it's large enough to treat as suspected leakage until proven otherwise,
   and the price-history mid can be a price nobody could actually buy at. **Needed before believing it:** a separate pre-registered study,
   in a different period, using prices people actually paid (trade prints), on a venue the user can legally use.
+
+### Study 7 Parts A and C results: copying winners rejected; most "wallet profit" figures leave out the losses
+
+Code: `tools/polymarket/study_wallets.py`.
+- **Pool:** 24,303 wallets traded in the 300 sampled formation markets (95 Up/Down crypto, 205 other). 3,000 were drawn at random.
+- **Excluded:** 426 had more than 5,000 positions (bots and market makers).
+- **Analyzed:** 2,574 had resolved positions.
+
+| | Result | Needed |
+|---|---|---|
+| Wallets active in both windows (≥ 10 markets each) | 1,360 | |
+| Rank correlation of ROI, formation vs test | **0.30** (p < 0.0001) | > 0, p < 0.01: **pass** |
+| Wallets profitable | 29% formation, 30% test | |
+| Top 50 by formation profit: formation | +$2.73M, median ROI +6.7% | |
+| Same 50 in the test window (46 still active) | **−$1.39M**, mean ROI −5.3%, median −1.0%, 43% profitable | median > 0: **fail** |
+| Whole pool, test window | mean ROI −10.7%, median −3.9% | |
+| Top 50 vs pool | t = 1.86 | > 2.33: **fail** |
+
+**Verdict: rejected.** The 50 biggest winners of July and August, followed into September and October, **lost $1.39 million together**.
+More than half of them lost money. They lost less than the average wallet, but not by a margin that rules out luck. The 0.30 rank
+correlation shows wallets keep their *style* (consistent losers keep losing), but that isn't enough to make copying the top profitable.
+
+**Part C, what the 50 formation winners did:**
+- 83% of their positions were sports, 4% crypto Up/Down.
+- The median wallet had 452 resolved positions, and its single best market made 36% of its window profit.
+- Median entry price was 0.54; 25% of entries were at 0.80+ and 12% below 0.20.
+
+They're high-volume sports bettors whose results swing on a few big games. That's not a repeatable edge you can see in the data.
+
+**The accounting trap, measured:** across all 2,574 wallets, `closed-positions` alone shows **+$39.6M** profit. The losing bets that were
+never sold or redeemed add **−$43.6M**. The true total is **−$3.4M**. Any wallet tracker, "smart money" list or screenshot built from
+closed positions shows a winner where the real result is a loss.
+
+## Study 7 conclusion (2026-10-09)
+
+| Part | Question | Answer |
+|---|---|---|
+| A | Copy the wallets that won the last 45 days? | **No.** The top 50 lost $1.39M in the next 45 days |
+| B | Buy favorites (the literature's edge)? | **No.** −5% to −11% per $1 a day before; favorites are overpriced here |
+| D | Use Polymarket crypto bets to trade BTC/ETH on Coinbase? | **No.** No better than the price itself; trading it lost money |
+| Lead | Long shots won about twice as often as priced | Unproven; needs its own pre-registered study (different period, real trade prices, a legal US venue) |
+
+No edge to trade. The paper test of the BTC+ETH trend system is unchanged.
