@@ -579,3 +579,31 @@ For the top 50 wallets by F profit: market categories, typical entry prices, num
 
 **Expectation, written in advance:** Part A fails (past winners regress, as with the Telegram channels). Part B is the most
 likely to show something, with a small edge at the 0.80–0.95 band. Whether it survives the spread and fees is the real question.
+
+### Part D (added 2026-10-09, before any data was pulled): does Polymarket's crypto crowd predict BTC/ETH on Coinbase?
+
+**User's question:** even without trading Polymarket, why not use its crypto bets as a signal to trade the same coins on Coinbase?
+Nothing prevents that: reading public data is legal. The question is whether the bets carry information the coin price doesn't already have.
+
+**Markets:** Polymarket's daily "Bitcoin Up or Down on <date>" and "Ethereum Up or Down on <date>", every day available through 2026-10-08.
+- Window: noon ET to noon ET the next day.
+- Resolution: "Up" if the Binance close at the end of the window is above the close at the start.
+
+**Signal (decided 1 hour into the window, from data available then):**
+- P_crowd = Polymarket's "Up" price at start + 1h.
+- P_fair = the chance of finishing up if the price just wanders randomly from here:
+  Φ(ln(S/S0) / (σ√τ)), where S/S0 is the Coinbase move since the window started, σ is the trailing 30-day hourly volatility and τ is the hours left.
+- **Edge signal = P_crowd − P_fair.** It's the part of the crowd's view that isn't just "price is already up or down".
+
+**Information test:** correlation between the edge signal and the Coinbase return from start + 1h to the window's end.
+
+**Trade (2 trials, BTC and ETH):**
+- If the edge signal > +0.05, go long the CDE perp from the next hourly open to the window's end. If < −0.05, short. Else stay flat.
+- 1x, at the user's perp fees (0.10% + $0.12/contract per side), 5 bps slippage, funding ignored (under a day).
+- Coinbase hourly candles. Logged with `log_trial`; the deflated Sharpe counts every trial so far.
+
+**Pass:** correlation t > 1.96 (one-sided p < 0.025 over 2 coins), the trade's net mean return > 0 in both halves of the sample,
+and DSR > 0.95 across all logged trials.
+
+**Expectation:** fails. Polymarket's short crypto markets are mostly priced by bots that follow exchange prices, so information
+should flow from Coinbase/Binance into Polymarket, not the other way.
