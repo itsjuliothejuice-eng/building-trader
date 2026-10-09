@@ -625,3 +625,32 @@ Code: `tools/polymarket/study_crowd_signal.py`. The daily "Up or Down" markets w
 **Verdict:** the crowd's price is no better a forecast than the coin's own price move, and its "extra opinion" points slightly the wrong way
 (not significant). Trading on it lost money in both halves for BTC. Information flows from exchange prices into Polymarket, not out of it.
 **There's nothing to copy into Coinbase trades from these markets.** Trial log: 31.
+
+### Study 7 Part B results: all 4 rejected. Favorites were *overpriced*, the opposite of the literature
+
+Code: `tools/polymarket/study_calibration.py`. 112,267 markets with $10k+ volume ended in the window. Of those, 73,654 were cleanly
+resolved and not Up/Down crypto (29,425 events), and 53,019 had a price 24 hours before their scheduled end.
+
+| Trial | Markets | Events | Win rate | Avg price | Return per $1 (taker) | t | Half 1 / Half 2 | Maker (diagnostic) |
+|---|---|---|---|---|---|---|---|---|
+| 24h before, favorite 0.80–0.95 | 9,889 | 6,457 | 80.3% | 0.874 | **−10.6%** | −20.0 | −10.5% / −10.6% | −9.0% |
+| 24h before, favorite 0.95–0.99 | 4,041 | 2,836 | 94.1% | 0.972 | −5.1% | −11.2 | −5.1% / −5.1% | −4.0% |
+| 7d before, favorite 0.80–0.95 | 5,015 | 3,453 | 82.6% | 0.871 | −7.2% | −10.3 | −7.8% / −6.7% | −5.5% |
+| 7d before, favorite 0.95–0.99 | 1,344 | 843 | 98.0% | 0.972 | −0.4% | −0.9 | −0.3% / −0.5% | +0.7% |
+
+**Calibration, 24h before (all 53,019 markets):** price vs how often that side won.
+
+| Price | 0–0.05 | 0.05–0.10 | 0.10–0.20 | 0.20–0.35 | 0.35–0.50 | 0.50–0.65 | 0.65–0.80 | 0.80–0.90 | 0.90–0.95 | 0.95–1.0 |
+|---|---|---|---|---|---|---|---|---|---|---|
+| Avg price | 0.014 | 0.073 | 0.149 | 0.275 | 0.428 | 0.558 | 0.715 | 0.842 | 0.926 | 0.982 |
+| Actually won | 0.032 | 0.141 | 0.221 | 0.333 | 0.442 | 0.546 | 0.684 | 0.771 | 0.849 | 0.967 |
+
+The same shape appears in markets with $250k+ volume (4,654), $1M+ (1,101), and markets whose price moved in the last 3 hours (27,132),
+so it isn't only stale prices in thin markets. Sports are two-thirds of the favorite trades and lost −10% per $1. Weather lost −9%.
+
+**What it means:**
+- **Buying favorites loses money on Polymarket a day or a week before the end.** The pre-registered edge is rejected.
+- **The data points the other way: long shots won about twice as often as priced** (7% priced, 14% won). That's a *new* hypothesis,
+  not a finding. It was spotted after looking at the data, it's large enough to treat as suspected leakage until proven otherwise,
+  and the price-history mid can be a price nobody could actually buy at. **Needed before believing it:** a separate pre-registered study,
+  in a different period, using prices people actually paid (trade prints), on a venue the user can legally use.
