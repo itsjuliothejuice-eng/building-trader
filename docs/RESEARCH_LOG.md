@@ -697,3 +697,48 @@ closed positions shows a winner where the real result is a loss.
 | Lead | Long shots won about twice as often as priced | Unproven; needs its own pre-registered study (different period, real trade prices, a legal US venue) |
 
 No edge to trade. The paper test of the BTC+ETH trend system is unchanged.
+
+---
+
+## Study 8: are long shots underpriced on Kalshi? (pre-registered 2026-10-09)
+
+**Why:** Study 7 found, *after looking at the data*, that Polymarket long shots priced about 7¢ won about 14% of the time.
+That lead needs testing on data it didn't come from, at prices people actually paid, on a venue the user can legally use.
+**Kalshi:** CFTC-regulated and US-legal; Coinbase's prediction markets run on it.
+
+**Mechanism, if real:** a day before resolution, the crowd is overconfident. It pushes the favorite too high, and whoever sells
+the long shot cheaply is the one who loses. **Against it:** Whelan's study of 300k+ Kalshi contracts found the opposite (long shots
+*over*priced, buyers losing about 60% of stake under 10¢). My expectation is that this fails.
+
+**Data:** Kalshi's public API (no account, no key): settled markets and every trade print, including which side the taker bought.
+Excluded:
+- multi-leg combo markets (parlays)
+- markets under 5,000 contracts of volume
+
+Markets that weren't open 24 hours before close, such as hourly and 15-minute markets, drop out on their own.
+
+**Periods:**
+- **Test:** markets closing 2026-04-12 to 2026-07-10. This period doesn't overlap the Polymarket window.
+- **Replication:** markets closing 2026-07-11 to 2026-10-08, on Kalshi.
+
+**Rule:**
+- Decision time = 24 hours before the market's close time.
+- In the 6 hours before then, take the last trade's YES price y. If y is in the band, the long shot is YES. If 1 − y is in the band, it's NO.
+- **Entry price:** the volume-weighted price takers actually paid to buy the long-shot side in that 6-hour window.
+  With no such buys, the trade is skipped: there's no proof it could have been filled.
+- **Fee:** Kalshi taker 0.07 × p × (1 − p) per contract. That's the standard rate; rounding up to the cent makes small orders a bit worse.
+- Settled on Kalshi's own `result`.
+
+**Trials (2):** long-shot band {0.03–0.10, 0.10–0.20}.
+
+**Statistics:** each event (e.g. one game or one day's temperature) counts once, as the average return of its trades. One-sided t-test,
+p < 0.025 (2 trials), so t > 1.96.
+
+**Pass:**
+- ≥ 200 events
+- net return per $1 > 0 with t > 1.96
+- positive in both halves of the test period
+- positive in the replication period
+
+**Caveat set now:** for markets that can close early, the listed close time may be the actual close rather than the scheduled one,
+which would leak timing. Results are also reported separately for markets that can't close early.
