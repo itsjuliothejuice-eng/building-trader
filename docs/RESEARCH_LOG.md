@@ -745,4 +745,5 @@ which would leak timing. Results are also reported separately for markets that c
 
 **Change before any results (2026-10-09, data collection only):** Kalshi's public rate limit (about 3 requests a second) makes checking
 trades for every market infeasible: about 100k markets would take ~9 hours. Every qualifying market is listed, then **6,000 per period are
-drawn at random (seed 8)** for the trade lookup. Random sampling doesn't bias the result; it only widens the error bars.
+drawn at random (seed 8)** for the trade lookup. Random sampling doesn't bias the result; it only widens the error bars. Measured sustained limit: about 1.2 requests a second, so the sample was cut to **3,000 per period**, still before any result
+was seen (listing all markets alone takes ~4 hours).

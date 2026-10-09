@@ -25,7 +25,7 @@ OUT = Path('Data/kalshi')
 PERIODS = {'test': ('2026-04-12', '2026-07-11'), 'replication': ('2026-07-11', '2026-10-09')}   # [start, end)
 BANDS = {'0.03-0.10': (0.03, 0.10), '0.10-0.20': (0.10, 0.20)}
 MIN_VOLUME, HOURS_BEFORE, WINDOW_H, T_NEEDED, FEE = 5000, 24, 6, 1.96, 0.07
-SAMPLE = 6000   # markets per period checked for trades (random, seed 8): Kalshi's public rate limit
+SAMPLE = 3000   # markets per period checked for trades (random, seed 8): Kalshi's public rate limit
 
 _s = requests.Session()
 _last, PACE = 0.0, 0.3
