@@ -607,3 +607,21 @@ and DSR > 0.95 across all logged trials.
 
 **Expectation:** fails. Polymarket's short crypto markets are mostly priced by bots that follow exchange prices, so information
 should flow from Coinbase/Binance into Polymarket, not the other way.
+
+### Study 7 Part D results: rejected. The Polymarket crowd adds nothing to the coin price
+
+Code: `tools/polymarket/study_crowd_signal.py`. The daily "Up or Down" markets were found from 2025-08-02 to 2026-10-07 (425 BTC days, 426 ETH days).
+
+| | BTC | ETH |
+|---|---|---|
+| Forecast error 1h into the day (Brier; lower is better): Polymarket crowd | 0.2447 | 0.2435 |
+| Same, for "random walk from the current price" (no crowd at all) | **0.2444** | **0.2429** |
+| Crowd's extra view vs the rest of the day's move | r = −0.07, t = −1.47 | r = −0.07, t = −1.45 |
+| Trades (signal beyond ±0.05) | 45 | 29 |
+| Average per trade after perp fees | −0.74% | −0.29% |
+| Total | −28.5% | −8.0% |
+| DSR (31 trials) | 0.000 | 0.003 |
+
+**Verdict:** the crowd's price is no better a forecast than the coin's own price move, and its "extra opinion" points slightly the wrong way
+(not significant). Trading on it lost money in both halves for BTC. Information flows from exchange prices into Polymarket, not out of it.
+**There's nothing to copy into Coinbase trades from these markets.** Trial log: 31.
