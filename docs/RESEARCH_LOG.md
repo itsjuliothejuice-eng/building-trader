@@ -742,3 +742,7 @@ p < 0.025 (2 trials), so t > 1.96.
 
 **Caveat set now:** for markets that can close early, the listed close time may be the actual close rather than the scheduled one,
 which would leak timing. Results are also reported separately for markets that can't close early.
+
+**Change before any results (2026-10-09, data collection only):** Kalshi's public rate limit (about 3 requests a second) makes checking
+trades for every market infeasible: about 100k markets would take ~9 hours. Every qualifying market is listed, then **6,000 per period are
+drawn at random (seed 8)** for the trade lookup. Random sampling doesn't bias the result; it only widens the error bars.
