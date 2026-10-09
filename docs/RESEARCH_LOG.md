@@ -499,3 +499,83 @@ came from BTC and ETH. The other 20 or 294 coins mostly diluted it.
 
 **Conclusion:** concentrating on BTC and ETH isn't a limitation of the paper system; it's where its edge comes from. No change to the
 paper test. The trial log now holds 29 trials.
+
+---
+
+## Study 7: Polymarket, copying winning wallets vs a structural edge (pre-registered 2026-10-09)
+
+**Question (user request):** analyze profitable Polymarket wallets from the last 90 days and build an edge.
+
+**Can the user trade it? (checked 2026-10-09)**
+- The international Polymarket site blocks US persons. We won't use a VPN or proxy to get around that.
+- Polymarket US (CFTC-regulated) is rolling out state by state with a limited market list.
+- Kalshi is legal in the US, and Coinbase offers Kalshi-run prediction markets.
+
+So anything found here is a **hypothesis to retest on a venue the user can legally use**, then paper trade. Money stays in the bank either way.
+
+**Data:** Polymarket's public APIs (no account, no key).
+- Gamma: markets and their resolutions.
+- CLOB `prices-history`: prices over time.
+- Data API: each wallet's `closed-positions` and `positions`.
+
+**Accounting trap found before any analysis:** `closed-positions` lists only positions that were sold or redeemed. A losing bet
+that's never redeemed stays in `positions` with value $0. A wallet's profit from `closed-positions` alone therefore leaves out
+most of its losses. This study counts both: `closed-positions.realizedPnl` plus, for resolved markets still in `positions`,
+`realizedPnl + cashPnl`.
+
+**Windows:**
+- Formation (F): markets whose scheduled end date is 2026-07-11 to 2026-08-24 (days −90 to −46).
+- Test (T): 2026-08-25 to 2026-10-08 (days −45 to −1).
+
+### Part A: do winning wallets keep winning? (the condition for copy-trading to work)
+
+**Mechanism claimed by copy-traders:** some wallets have skill or inside information, and copying them captures it. Against it: with
+hundreds of thousands of wallets, many look brilliant over 45 days by luck, the same selection effect as the Telegram channels.
+
+**Pool, chosen without looking at the test window:**
+- Draw 300 markets at random (seed 7) from markets ending in F with volume ≥ $10,000.
+- Take the wallets in each one's 500 most recent trades. Cap the pool at 3,000 wallets, drawn at random (seed 7).
+- For each wallet, compute profit per resolved market, dated by the market's end date.
+- Wallets with more than 5,000 positions in their history (bots and market makers) can't be fetched in full. They're counted and left out, since they can't be copied anyway.
+
+**Measures:** ROI = profit ÷ amount bought, per window.
+1. Spearman correlation between F and T ROI, among wallets with ≥ 10 resolved markets in each window.
+2. The top 50 wallets by F profit (≥ 10 markets in F): their mean and median T ROI vs the whole pool.
+
+**Pass (copying is worth a follow-up study):** correlation > 0 with p < 0.01, **and** the top 50 have positive median T ROI
+**and** mean T ROI above the pool's (t > 2.33). Even a pass only shows persistence. It doesn't show that copying a wallet minutes
+later, at worse prices, still makes money.
+
+### Part B: favorite–longshot bias (the structural edge from the literature)
+
+**Mechanism:** buyers overpay for long shots (cheap "lottery tickets"), so favorites are slightly underpriced. The counterparty is the
+retail long-shot buyer. This is documented on Kalshi (Whelan) and in betting markets for decades.
+
+**Markets:** every market whose scheduled end date is 2026-07-11 to 2026-10-08, resolved cleanly (final price exactly 0/1),
+with volume ≥ $10,000. Excluded: 5-, 15- and 60-minute "Up or Down" crypto markets (a speed game, not this mechanism).
+
+**Rule:** at a set time before the **scheduled** end date (what a trader knows in advance), if one side is priced in the band, buy that side.
+- The market must still be open then. Markets that resolved earlier are skipped, as they would be in real life.
+- Price = last CLOB price-history point at or before the decision time.
+
+**Costs (taker, conservative):**
+- Entry at price + $0.01 (spread), plus Polymarket's taker fee: feeRate × p × (1 − p) per share, using the market's fee category
+  (crypto 0.07, sports/culture/economics/weather/other 0.05, politics/finance/tech/mentions 0.04, geopolitics 0).
+- A maker version (entry at the price, no fee, fill not guaranteed) is shown as a diagnostic only.
+
+**Trials (4):** decision time {24 hours, 7 days} before the scheduled end × favorite band {0.80–0.95, 0.95–0.99}.
+
+**Statistics:**
+- Markets in one event (e.g. brackets of one election) move together, so each event counts once: the average return of its trades.
+- t-test across events. One-sided p < 0.0125 (4 trials) means t > 2.24.
+
+**Pass:** at least 200 events, net return per $1 > 0 with t > 2.24, **and** positive in both halves (end dates in F and in T).
+A calibration table (price bucket vs actual win rate) is reported for context.
+
+### Part C: what the winners actually do (descriptive, not a gate)
+
+For the top 50 wallets by F profit: market categories, typical entry prices, number of markets, profit concentration
+(share from the single best market), and maker/taker rebates received.
+
+**Expectation, written in advance:** Part A fails (past winners regress, as with the Telegram channels). Part B is the most
+likely to show something, with a small edge at the 0.80–0.95 band. Whether it survives the spread and fees is the real question.
