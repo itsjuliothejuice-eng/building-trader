@@ -40,6 +40,7 @@ def get(path, params):
     if f.exists():
         return json.loads(f.read_text())
     global _last
+    r = None
     for attempt in range(10):
         wait = _last + PACE - time.time()                 # Kalshi's public limit: stay near 3 requests/second
         if wait > 0:
@@ -58,7 +59,7 @@ def get(path, params):
         r.raise_for_status()
         break
     else:
-        raise RuntimeError(f'{path}: kept failing')
+        raise RuntimeError(f'{path} {params}: kept failing (last status {getattr(r, "status_code", "network")})')
     f.parent.mkdir(parents=True, exist_ok=True)
     f.write_text(r.text)
     return r.json()
@@ -66,6 +67,18 @@ def get(path, params):
 
 def ts(s):
     return int(datetime.fromisoformat(s.replace('Z', '+00:00')).timestamp())
+
+
+def series_markets(series, lo):
+    """A series' historical markets, newest first, until closes are older than lo."""
+    cursor = None
+    while True:
+        page = get('/historical/markets', {'series_ticker': series, 'limit': 1000, **({'cursor': cursor} if cursor else {})})
+        ms = page.get('markets', [])
+        yield from ms
+        cursor = page.get('cursor')
+        if not cursor or not ms or min(ts(m['close_time']) for m in ms) < lo:
+            return
 
 
 def all_markets(first, last):
@@ -77,27 +90,21 @@ def all_markets(first, last):
     lo, hi = ts(first + 'T00:00:00Z'), ts(last + 'T00:00:00Z')
     series = [x for x in get('/series', {'limit': 10000}).get('series', [])
               if x.get('frequency') not in ('hourly', 'fifteen_min')]
-    found = {}
+    found, skipped = {}, []
     for i, sr in enumerate(series):
-        for path, extra in (('/historical/markets', {}),):
-            cursor = None
-            while True:
-                p = {'series_ticker': sr['ticker'], 'limit': 1000, **extra}
-                if cursor:
-                    p['cursor'] = cursor
-                page = get(path, p)
-                ms = page.get('markets', [])
-                for m in ms:
-                    c = ts(m['close_time'])
-                    if (lo <= c < hi and m.get('result') in ('yes', 'no') and not m.get('mve_collection_ticker')
-                            and float(m.get('volume_fp') or 0) >= MIN_VOLUME):
-                        found[m['ticker']] = m
-                cursor = page.get('cursor')
-                if not cursor or not ms or min(ts(m['close_time']) for m in ms) < lo:
-                    break
+        try:
+            for m in series_markets(sr['ticker'], lo):
+                if (lo <= ts(m['close_time']) < hi and m.get('result') in ('yes', 'no')
+                        and not m.get('mve_collection_ticker') and float(m.get('volume_fp') or 0) >= MIN_VOLUME):
+                    found[m['ticker']] = m
+        except RuntimeError as err:
+            skipped.append(sr['ticker'])
+            print(f'\n  skipped series {sr["ticker"]}: {err}')
+            if len(skipped) > 50:
+                raise
         if i % 100 == 0:
             print(f'\r  series {i:,}/{len(series):,}: {len(found):,} markets', end='', flush=True)
-    print()
+    print(f'\n  series skipped after repeated errors: {len(skipped)} {skipped[:10]}')
     cursor = None                                        # settled after the cutoff: the live endpoint has a date filter
     while True:
         p = {'status': 'settled', 'limit': 1000, 'mve_filter': 'exclude', 'min_close_ts': ts(CUTOFF + 'T00:00:00Z') - 86400 * 3,
