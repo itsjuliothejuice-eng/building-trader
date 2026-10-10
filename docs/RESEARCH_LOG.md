@@ -747,3 +747,26 @@ which would leak timing. Results are also reported separately for markets that c
 trades for every market infeasible: about 100k markets would take ~9 hours. Every qualifying market is listed, then **6,000 per period are
 drawn at random (seed 8)** for the trade lookup. Random sampling doesn't bias the result; it only widens the error bars. Measured sustained limit: about 1.2 requests a second, so the sample was cut to **3,000 per period**, still before any result
 was seen (listing all markets alone takes ~4 hours).
+
+### Study 8 results: rejected. The long-shot "edge" flips sign with the period
+
+Code: `tools/kalshi/study_longshots.py`.
+- **Universe:** 107,453 qualifying markets in the test period and 183,677 in the replication period, 3,000 drawn at random from each.
+- **Data issues:** no series were skipped for errors. Every long-shot trade came from markets that can close early, so the
+  "can't close early" check had nothing to compare.
+- **Price:** what takers actually paid, plus Kalshi's fee.
+
+| Period | Band | Markets | Events | Avg paid | Won | Return per $1 | t | Half 1 / Half 2 |
+|---|---|---|---|---|---|---|---|---|
+| **Test** (Apr 12–Jul 10) | 3–10¢ | 243 | 233 | 8.2¢ | 4.5% | **−33%** | −1.33 | −59% / −8% |
+| **Test** | 10–20¢ | 245 | 241 | 16.9¢ | 14.7% | **−11%** | −0.74 | −7% / −15% |
+| Replication (Jul 11–Oct 8) | 3–10¢ | 159 | 156 | 6.7¢ | 10.7% | +60% | 1.55 | +88% / +34% |
+| Replication | 10–20¢ | 154 | 154 | 14.7¢ | 17.5% | +15% | 0.70 | +9% / +21% |
+
+**Verdict: both bands rejected.** In the test period, which the idea didn't come from, Kalshi long shots **lost** money, matching
+Whelan's finding. In July–October, the same months where Polymarket showed the pattern, they looked profitable again.
+- **Not significant either way:** t = 1.55 and 0.70.
+- **Driven by a few contract types:** NFL touchdown and spread props at the start of football season.
+
+**What it means:** the long-shot effect seen on Polymarket isn't a stable edge. It belongs to one stretch of time, so it's luck or a
+seasonal quirk. Buying it in the spring would have lost a third of every dollar in the cheapest band. No tradeable edge. Study 7's lead is closed.
