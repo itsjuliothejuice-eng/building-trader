@@ -40,7 +40,10 @@ def get(path, params):
     key = hashlib.sha1((path + json.dumps(params, sort_keys=True)).encode()).hexdigest()
     f = CACHE / key[:2] / f'{key}.json'
     if f.exists():
-        return json.loads(f.read_text())
+        try:
+            return json.loads(f.read_text())
+        except ValueError:                             # half-written (e.g. disk filled up): fetch again
+            f.unlink()
     global _last
     r = None
     for attempt in range(10):
