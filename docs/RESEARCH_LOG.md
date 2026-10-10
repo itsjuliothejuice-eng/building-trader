@@ -814,3 +814,32 @@ with fewer than 20 closing fills in a window.
 
 **Expectation:** fails, like every leaderboard tested so far. If it passes, it only shows persistence. Copying with a delay on another
 exchange is a separate test.
+
+### Study 9 results: rejected, but the closest any copy idea has come
+
+Code: `tools/hyperliquid/study_lead_traders.py`. The leaderboard had 47,213 accounts, 43,339 of them with $100k+ volume, and 1,000 were sampled.
+- 70 were over the fill limit (bots).
+- 930 were analyzed; 293 were active in formation (≥ 20 closing fills) and 216 in both windows.
+
+| | Result | Needed |
+|---|---|---|
+| Rank correlation of profit, formation vs test | 0.14 (p = 0.019) | p < 0.01: **fail, narrowly** |
+| Traders profitable | formation 42%, test 52% | |
+| Pool, test window | mean +$16,380, median +$179 | |
+| **Top 20 by formation profit** | F: +$5.49M. **T: +$4.06M, 70% profitable**, median +$43k | t vs pool 1.55 (needs 2.24): **reject** |
+| **Strict "proven"** (31 qualified, top 20) | F: +$4.25M. **T: +$4.33M, 70% profitable**, median +$43k | t vs pool 1.73 (needs 2.24): **reject** |
+
+**Verdict: both rejected under the pre-set bar.** Unlike Polymarket (Study 7, where the top 50 lost $1.39M) and the Telegram channels,
+Hyperliquid's winners mostly **kept winning**: 14 of 20 were profitable again. Three things stop this from counting as proven:
+1. **Not distinguishable from luck at the bar set in advance** (t = 1.55–1.73 vs 2.24; correlation p = 0.019 vs 0.01).
+2. **A few whales carry it.** Two accounts made +$1.35M and +$1.98M of the test profit, while others lost up to −$466k.
+   The median winner made far less than the average.
+3. **The pool flatters it.** It came from today's leaderboard, so accounts that blew up and left are missing, which pushes
+   toward exactly this kind of persistence.
+
+**Also:** these are mostly large accounts ($100k–$60M) trading perps with leverage, and Hyperliquid is closed to US persons. Following them would mean
+reproducing their trades on Coinbase CDE perps, with a delay, at a different size. That's untested.
+
+**The honest next step, if any, is a forward test, which has neither of the biases above.** Fix the 20 "strict" picks now, using only
+data through 2026-10-09. Then track their real trades for 60 days, paper-copied onto the coins Coinbase lists, next to the current paper system. A trader is
+"proven" only if that forward record holds up.
