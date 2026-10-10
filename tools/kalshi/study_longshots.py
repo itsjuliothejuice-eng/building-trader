@@ -89,7 +89,7 @@ def all_markets(first, last):
     """
     lo, hi = ts(first + 'T00:00:00Z'), ts(last + 'T00:00:00Z')
     series = [x for x in get('/series', {'limit': 10000}).get('series', [])
-              if x.get('frequency') not in ('hourly', 'fifteen_min')]
+              if x.get('frequency') not in ('hourly', 'fifteen_min') and not x['ticker'].startswith('KXMVE')]   # KXMVE = combos
     found, skipped = {}, []
     for i, sr in enumerate(series):
         try:
