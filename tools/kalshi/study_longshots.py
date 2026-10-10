@@ -29,6 +29,8 @@ SAMPLE = 3000   # markets per period checked for trades (random, seed 8): Kalshi
 
 _s = requests.Session()
 _last, PACE = 0.0, 0.3
+KEEP = ('ticker', 'event_ticker', 'close_time', 'open_time', 'result', 'volume_fp', 'mve_collection_ticker',
+        'can_close_early')
 CUTOFF = '2026-08-10'   # Kalshi moves markets/trades before this to /historical
 if os.getenv('CCXT_CA_BUNDLE'):
     _s.verify = os.getenv('CCXT_CA_BUNDLE')
@@ -60,9 +62,12 @@ def get(path, params):
         break
     else:
         raise RuntimeError(f'{path} {params}: kept failing (last status {getattr(r, "status_code", "network")})')
+    out = r.json()
+    if 'markets' in out:                               # full market objects are ~30 KB each; keep what the study uses
+        out['markets'] = [{k: m.get(k) for k in KEEP} for m in out['markets']]
     f.parent.mkdir(parents=True, exist_ok=True)
-    f.write_text(r.text)
-    return r.json()
+    f.write_text(json.dumps(out))
+    return out
 
 
 def ts(s):
