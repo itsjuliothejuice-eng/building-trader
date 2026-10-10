@@ -19,6 +19,10 @@ The user lost a previous trading account and has chosen to keep all money in the
 
 `tools/paper/paper_trader.py` runs the approved BTC+ETH trend system (spot, 2/3 size, **$5,000 fake money**) on the user's laptop. It reads public prices only and never places orders. When asked how it's going, run `python tools/paper/paper_trader.py --report` and compare with the expectations in `docs/RESEARCH_LOG.md`. Don't change its rules mid-test; any change is a new pre-registered study and restarts the 60-day clock. Before changing the bot's logic, rerun `tools/paper/test_replay.py`, which must print PARITY OK.
 
+## Copy paper test (in progress, Study 10)
+
+`tools/hyperliquid/copy_paper.py` follows 20 fixed Hyperliquid traders (`picks.json`) hourly with **$5,000 fake money** on the coins Coinbase lists as perps (1x cap per trader, Coinbase fees). It runs on the user's laptop and reads public data only. When asked how it's going, run `python tools/hyperliquid/copy_paper.py --report`. Never change the picks or rules mid-test. The review is on 2026-12-09, against the criteria in `docs/RESEARCH_LOG.md`. Hyperliquid itself is closed to US persons; never suggest using it.
+
 ## The user's setup: Coinbase (US, Texas)
 
 What the account can trade (confirmed from the user's app, 2026-09-30):

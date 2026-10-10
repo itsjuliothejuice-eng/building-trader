@@ -1,0 +1,106 @@
+{
+ "selected_on": "2026-10-09",
+ "rule": "Study 9 strict: profitable in both 30-day halves of 2026-06-12..08-10, all-time P&L > 0, >= 100 closing fills; top 20 by formation profit",
+ "traders": [
+  {
+   "address": "0x8bae3527e5a33fa0cf184f37bc112d071463ab6d",
+   "formation_pnl": 1503309,
+   "alltime_pnl": 12034431
+  },
+  {
+   "address": "0xe2f86feccb1207710a442bc4e27a0701a290275a",
+   "formation_pnl": 849533,
+   "alltime_pnl": 7959400
+  },
+  {
+   "address": "0x1e771e1b95c86491299d6e2a5c3b3842d03b552e",
+   "formation_pnl": 411184,
+   "alltime_pnl": 4872163
+  },
+  {
+   "address": "0xf79ff138ad12140c6d2d7ee8bae563addcc7ee09",
+   "formation_pnl": 408828,
+   "alltime_pnl": 600894
+  },
+  {
+   "address": "0x23e398ab5b467d2f41f61f195ac178c6681b3158",
+   "formation_pnl": 218366,
+   "alltime_pnl": 83309
+  },
+  {
+   "address": "0xdbe0780a5c5a0e3b345101bbc01ac2218196d6d5",
+   "formation_pnl": 207806,
+   "alltime_pnl": 5192475
+  },
+  {
+   "address": "0x68a82030ee49af0dd0d1880da1aa18e0e97f003c",
+   "formation_pnl": 97507,
+   "alltime_pnl": 178872
+  },
+  {
+   "address": "0xfd145973ecacbda7c70309f6afe430c51724e60c",
+   "formation_pnl": 79441,
+   "alltime_pnl": 63904
+  },
+  {
+   "address": "0x8787e15b3bd497ca6008a0bad0a5c9706cb4eeed",
+   "formation_pnl": 79353,
+   "alltime_pnl": 98060
+  },
+  {
+   "address": "0x442773ff6c1133777375cb10ea0e88d748ef7e6a",
+   "formation_pnl": 64070,
+   "alltime_pnl": 107780
+  },
+  {
+   "address": "0x8e68a7f5f57a330879cde69979a7bc8da03c3435",
+   "formation_pnl": 56318,
+   "alltime_pnl": 229284
+  },
+  {
+   "address": "0x6da3738e1fc7325765facb5eae488e2e16b10512",
+   "formation_pnl": 51281,
+   "alltime_pnl": 924582
+  },
+  {
+   "address": "0x1bcfdca8f869359b4851169f685d791f8a4200cc",
+   "formation_pnl": 46168,
+   "alltime_pnl": 170259
+  },
+  {
+   "address": "0xd852e3a7a2abca6aecd0fa39147851ae96eba5d7",
+   "formation_pnl": 38452,
+   "alltime_pnl": 3406459
+  },
+  {
+   "address": "0x0980b34ade9476dba81bcdb0f865a333793ad1c2",
+   "formation_pnl": 35008,
+   "alltime_pnl": 661785
+  },
+  {
+   "address": "0x21a96cdf98236f993b7ed90bc1b5f9737ebd9a6f",
+   "formation_pnl": 32010,
+   "alltime_pnl": 60447
+  },
+  {
+   "address": "0xd1db106c95ebaff9ae45be2eb09128f47d85f217",
+   "formation_pnl": 29313,
+   "alltime_pnl": 29333
+  },
+  {
+   "address": "0x2e936a622d1701079f408160fb0b75ad738d36f0",
+   "formation_pnl": 19745,
+   "alltime_pnl": 85577
+  },
+  {
+   "address": "0xd2d10b8d8fa0999d38a735fbbbf978ab4531595d",
+   "formation_pnl": 15716,
+   "alltime_pnl": 21025
+  },
+  {
+   "address": "0xbc8d94fc30d2207813d6bdea36fefae6fe27c28b",
+   "formation_pnl": 11117,
+   "alltime_pnl": 72265
+  }
+ ]
+}

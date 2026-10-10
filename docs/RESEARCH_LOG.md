@@ -843,3 +843,36 @@ reproducing their trades on Coinbase CDE perps, with a delay, at a different siz
 **The honest next step, if any, is a forward test, which has neither of the biases above.** Fix the 20 "strict" picks now, using only
 data through 2026-10-09. Then track their real trades for 60 days, paper-copied onto the coins Coinbase lists, next to the current paper system. A trader is
 "proven" only if that forward record holds up.
+
+---
+
+## Study 10: forward paper-copy of the 20 "proven" Hyperliquid traders (pre-registered 2026-10-10)
+
+**Why forward:** Study 9's backtest was flattered by survivorship (a pool from today's leaderboard) and missed its bar.
+A forward test can't be flattered: the picks are fixed *before* the outcome exists.
+
+**Picks (fixed, never changed):** the 20 traders from Study 9's strict rule, chosen on data through 2026-10-09, saved in
+`tools/hyperliquid/picks.json`. A trader who stops trading or empties the account stays in the test as cash; nobody is swapped in.
+
+**Paper copy (fake money; no account, no key, no orders):** `tools/hyperliquid/copy_paper.py`, run hourly on the user's laptop.
+- **Account:** $5,000, split into 20 equal slices of $250, one per trader.
+- **Which positions:** each hour, read each trader's open perp positions on Hyperliquid (public). Mirror only the coins that have a Coinbase CDE perp:
+  AAVE ADA AVAX BCH BNB BTC DOGE DOT ENA ETH HBAR HYPE LINK LTC NEAR ONDO PAXG PEPE SHIB SOL SUI XLM XRP ZEC.
+  Positions in other coins are skipped, and the share of their exposure we could copy is reported.
+- **Size:** same weight as theirs: position ÷ their account value, × the slice's equity.
+- **Leverage cap 1x per slice** (CLAUDE.md default). If their copyable exposure is more than 1× their account, the slice is scaled down to 1×.
+- **Trading:** a slice trades a coin when its exposure is more than 10% of the slice away from target, or the trader closed the position.
+- **Costs (Coinbase CDE, Intro tier):** 0.10% fee + 0.05% slippage per side, and 1 bp/day funding on open positions.
+- **Prices:** Hyperliquid mid prices at each check (close to Coinbase's).
+- **Simplifications:** fractional sizes. Real whole-contract execution would need a much larger account than $250 per trader (Study 3).
+  The copy lag (up to 1 hour) is part of the test, because that's what a human or bot copying from Texas would face.
+
+**Also tracked:** each pick's own realized forward P&L on Hyperliquid (fills since 2026-10-10).
+
+**Review at 60 days (2026-12-09). The copy only "passes" if all of these hold:**
+1. The paper-copy account is up after costs.
+2. It beats the BTC+ETH paper system over the same days, on both return and worst drawdown.
+3. At least 12 of the 20 picks are profitable on their own forward P&L.
+4. The paper-copy account never fell more than 27% from its high (the same hard stop as the paper system).
+
+Passing earns a longer forward test, not money: the 60-day minimum in `CLAUDE.md` applies to the copy method itself. Nothing here changes the BTC+ETH paper test.
