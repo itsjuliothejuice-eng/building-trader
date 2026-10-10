@@ -770,3 +770,47 @@ Whelan's finding. In July–October, the same months where Polymarket showed the
 
 **What it means:** the long-shot effect seen on Polymarket isn't a stable edge. It belongs to one stretch of time, so it's luck or a
 seasonal quirk. Buying it in the spring would have lost a third of every dollar in the cheapest band. No tradeable edge. Study 7's lead is closed.
+
+---
+
+## Study 9: is there a proven lead trader worth copying? Hyperliquid (pre-registered 2026-10-10)
+
+**User request:** find a proven lead trader to copy trade.
+
+**Where to look:**
+- **Copy-trading leaderboards on Binance, Bybit, Bitget and OKX:** closed to US residents, and the exchange curates them.
+  Closed or blown-up accounts disappear, so they can't be audited.
+- **Hyperliquid** (perp exchange on its own chain): every fill, fee and P&L for every address is public.
+  Its leaderboard lists 47,216 accounts. It's also closed to US persons, so a trader found here could only be *followed*
+  (e.g. on Coinbase CDE perps for shared coins), not copied on-platform. The point here is to learn whether "proven" traders exist at all.
+- **eToro US CopyTrader:** phased US rollout (waitlist), so Texas availability is unconfirmed.
+
+**Mechanism copy traders claim:** some traders have skill that persists. Against it, the same selection effect as Studies 7 and the
+Telegram scorecard: out of 47,000 accounts, many look brilliant over two months by luck and leverage.
+
+**Data:** Hyperliquid public API, no account. The pool comes from today's leaderboard:
+- **Eligible:** all-time volume ≥ $100,000.
+- **Sample:** 1,000 addresses at random (seed 9).
+- **Bias:** this favors survivors, since accounts that blew up and left may be missing. So it **flatters** copying. A failure is conclusive;
+  a pass would need a survivor-free re-test.
+
+**Windows:**
+- Formation F: 2026-06-12 to 2026-08-10 (60 days).
+- Test T: 2026-08-11 to 2026-10-09 (60 days).
+
+**Profit per window:** realized P&L from fills (`closedPnl` − fees). Unrealized P&L and funding are left out, which limits the result to closed trades.
+
+**Excluded:** traders whose fills since F began exceed the API's 10,000-fill limit (high-frequency bots, which can't be copied) and traders
+with fewer than 20 closing fills in a window.
+
+**Two definitions of "proven" (2 trials):**
+1. **Top 20 by formation profit.**
+2. **Strict:** profitable in *both* 30-day halves of F, all-time P&L > 0, ≥ 100 closing fills in F. If more than 20 qualify, take the top 20 by F profit.
+
+**Pass (worth a follow-the-trades study on Coinbase):**
+- Spearman correlation of window profits > 0 with p < 0.01, across traders active in both windows.
+- **And**, for a definition: median test profit > 0, more than 60% profitable in T, and mean test profit above the pool's, t > 2.24
+  (one-sided p < 0.0125, 2 trials).
+
+**Expectation:** fails, like every leaderboard tested so far. If it passes, it only shows persistence. Copying with a delay on another
+exchange is a separate test.
