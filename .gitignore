@@ -1,0 +1,15 @@
+.env
+*.env
+venv/
+.venv/
+__pycache__/
+*.pyc
+.cbt/
+data/
+Data/
+logs/
+experiments/
+*.session
+*.session-journal
+reports/
+tools/telegram/channels.yaml
