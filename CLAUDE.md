@@ -13,6 +13,8 @@ A workspace for trading research, backtesting and bot building. It bundles four 
 
 ## Where things stand (read first)
 
+Short status, upcoming reviews and what's been ruled out: `docs/HANDOFF.md`.
+
 The user lost a previous trading account and has chosen to keep all money in the bank until a system passes every gate **and** 60+ days of paper trading. Support that decision. Don't suggest depositing, going live, or "small test trades" before that. Ground rules, the research log and every study's results are in `docs/RESEARCH_LOG.md`. Add each new study there, pre-registered, before running it.
 
 ## Paper trading (in progress)
